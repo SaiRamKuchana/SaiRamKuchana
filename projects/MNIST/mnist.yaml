@@ -1,0 +1,4 @@
+- title: Nearest neighbor for handwritten digit recognition
+  path: projects/MNIST/mnist.qmd
+  image: projects/MNIST/samplemnist.png
+  categories: [NumPy, Matplotlib, scikit-learn]

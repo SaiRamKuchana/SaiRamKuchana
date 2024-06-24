@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2. Soft deletions, views, and triggers in the context of a museum’s database</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../projects/ParseTrees/ParsetreesNnounphrases.html" rel="next">
+<link href="../../projects/SQLPackages/packages.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Home</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../../projects/SQLMuseum/mfa.html" rel="" target="" aria-current="page">
+ <span class="menu-text">Projects</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools ms-auto">
+    <a href="https://www.linkedin.com/in/ram-kuchana/" rel="" title="Linkedin" class="quarto-navigation-tool px-1" aria-label="Linkedin"><i class="bi bi-linkedin"></i></a>
+    <a href="mailto:rams9795@gmail.com" rel="" title="Email" class="quarto-navigation-tool px-1" aria-label="Email"><i class="bi bi-envelope"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../projects/SQLPackages/packages.html">SQL Projects</a></li><li class="breadcrumb-item"><a href="../../projects/SQLMuseum/mfa.html">2. Soft deletions, views, and triggers in the context of a museum’s database</a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">SQL Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/SQLPackages/packages.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Using SQL to find the missing packages in the mail delivery service’s database</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/SQLMuseum/mfa.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">2. Soft deletions, views, and triggers in the context of a museum’s database</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text">NLP Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/ParseTrees/ParsetreesNnounphrases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Generating parse trees and extracting noun phrases</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text">ML Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/MNIST/mnist.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Nearest neighbor classifier for handwritten digit recognition</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/NimGame/NimGame.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">2. Training an AI to play a game using reinforcement learning</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#museum-of-fine-arts-mfa" id="toc-museum-of-fine-arts-mfa" class="nav-link active" data-scroll-target="#museum-of-fine-arts-mfa"><span class="header-section-number">1</span> Museum of Fine Arts (MFA)</a>
+  <ul class="collapse">
+  <li><a href="#schema" id="toc-schema" class="nav-link" data-scroll-target="#schema"><span class="header-section-number">1.1</span> Schema</a></li>
+  </ul></li>
+  <li><a href="#problems-involving-soft-deletions-views-and-triggers" id="toc-problems-involving-soft-deletions-views-and-triggers" class="nav-link" data-scroll-target="#problems-involving-soft-deletions-views-and-triggers"><span class="header-section-number">2</span> Problems Involving Soft Deletions, Views and Triggers</a>
+  <ul class="collapse">
+  <li><a href="#problem-1-soft-deleting-the-artworks" id="toc-problem-1-soft-deleting-the-artworks" class="nav-link" data-scroll-target="#problem-1-soft-deleting-the-artworks"><span class="header-section-number">2.1</span> Problem 1: Soft deleting the artworks</a></li>
+  <li><a href="#problem-2-view-that-shows-only-available-artworks" id="toc-problem-2-view-that-shows-only-available-artworks" class="nav-link" data-scroll-target="#problem-2-view-that-shows-only-available-artworks"><span class="header-section-number">2.2</span> Problem 2: View that shows only available artworks</a></li>
+  <li><a href="#problem-3-trigger-that-soft-deletes-the-artworks" id="toc-problem-3-trigger-that-soft-deletes-the-artworks" class="nav-link" data-scroll-target="#problem-3-trigger-that-soft-deletes-the-artworks"><span class="header-section-number">2.3</span> Problem 3: Trigger that soft deletes the artworks</a></li>
+  <li><a href="#problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" id="toc-problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" class="nav-link" data-scroll-target="#problem-4-trigger-that-reverses-the-soft-deletion-of-artworks"><span class="header-section-number">2.4</span> Problem 4: Trigger that reverses the soft deletion of artworks</a></li>
+  <li><a href="#problem-5-trigger-that-inserts-new-artworks" id="toc-problem-5-trigger-that-inserts-new-artworks" class="nav-link" data-scroll-target="#problem-5-trigger-that-inserts-new-artworks"><span class="header-section-number">2.5</span> Problem 5: Trigger that inserts new artworks</a></li>
+  </ul></li>
+  <li><a href="#solution-to-problem-1-soft-deleting-the-artworks" id="toc-solution-to-problem-1-soft-deleting-the-artworks" class="nav-link" data-scroll-target="#solution-to-problem-1-soft-deleting-the-artworks"><span class="header-section-number">3</span> Solution to Problem 1: Soft deleting the artworks</a></li>
+  <li><a href="#solution-to-problem-2-view-that-shows-only-available-artworks" id="toc-solution-to-problem-2-view-that-shows-only-available-artworks" class="nav-link" data-scroll-target="#solution-to-problem-2-view-that-shows-only-available-artworks"><span class="header-section-number">4</span> Solution to Problem 2: View that shows only available artworks</a></li>
+  <li><a href="#solution-to-problem-3-trigger-that-soft-deletes-the-artworks" id="toc-solution-to-problem-3-trigger-that-soft-deletes-the-artworks" class="nav-link" data-scroll-target="#solution-to-problem-3-trigger-that-soft-deletes-the-artworks"><span class="header-section-number">5</span> Solution to Problem 3: Trigger that soft deletes the artworks</a></li>
+  <li><a href="#solution-to-problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" id="toc-solution-to-problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" class="nav-link" data-scroll-target="#solution-to-problem-4-trigger-that-reverses-the-soft-deletion-of-artworks"><span class="header-section-number">6</span> Solution to Problem 4: Trigger that reverses the soft deletion of artworks</a></li>
+  <li><a href="#solution-to-problem-5-trigger-that-inserts-new-artworks" id="toc-solution-to-problem-5-trigger-that-inserts-new-artworks" class="nav-link" data-scroll-target="#solution-to-problem-5-trigger-that-inserts-new-artworks"><span class="header-section-number">7</span> Solution to Problem 5: Trigger that inserts new artworks</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">2. Soft deletions, views, and triggers in the context of a museum’s database</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="museum-of-fine-arts-mfa" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Museum of Fine Arts (MFA)</h1>
+<p>In this project, we will explore the concepts of soft deletions, views, and triggers in the context of the Museum of Fine Arts (MFA). The MFA is a century-old museum housing numerous historical and contemporary artifacts and artworks. It manages its extensive collection through the MFA database, which tracks thousands of items. However, for the purpose of this project, we will work with a subset of the database containing only ten items in the <code>collections</code> table.</p>
+<section id="schema" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="schema"><span class="header-section-number">1.1</span> Schema</h2>
+<div class="quarto-figure quarto-figure-left">
+<figure class="figure">
+<p><img src="ERmfa.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">ER diagram of the MFA database</figcaption>
+</figure>
+</div>
+<p>The Schema of the MFA database is shown above. The <code>collections</code> table contains the following columns:</p>
+<ul>
+<li><code>id</code>, which is the ID of the table that serves as the primary key</li>
+<li><code>title</code>, which is the name of the art piece</li>
+<li><code>accession_number</code>, which is a unique ID used by the museum internally</li>
+<li><code>acquired</code>, which indicates when the art was acquired</li>
+</ul>
+<p>Let us now establish the SQLite connection to the database using DBI package.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"mfa.db"</span>) <span class="co"># establish SQLite connection to the database</span></span></code></pre></div>
+</details>
+</div>
+<p>The data of the <code>collections</code> table is as follows:</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="problems-involving-soft-deletions-views-and-triggers" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Problems Involving Soft Deletions, Views and Triggers</h1>
+<p>Imagine you are a database administrator of the MFA and solve the following problems:</p>
+<section id="problem-1-soft-deleting-the-artworks" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="problem-1-soft-deleting-the-artworks"><span class="header-section-number">2.1</span> Problem 1: Soft deleting the artworks</h2>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Implement a soft deletion of items in the <code>collections</code> table, where a log of sold artworks is kept in the column named “deleted” instead of completely removing them from the table, so that the records of artworks in the collection are not lost. The “deleted” column in the <code>collections</code> table must have a value of 0 for the available items for sale and a value of 1 for the items that have been sold. Imagine the artworks “Farmers Working at Dawn” and “Tile Lunette” were sold, and implement this idea of soft deletion on them.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="problem-2-view-that-shows-only-available-artworks" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="problem-2-view-that-shows-only-available-artworks"><span class="header-section-number">2.2</span> Problem 2: View that shows only available artworks</h2>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Create a view named <code>current_collections</code> using all the columns of the collections table except the “deleted” column, so that the view can be used to display only the information about the artworks that are available for sale.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="problem-3-trigger-that-soft-deletes-the-artworks" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="problem-3-trigger-that-soft-deletes-the-artworks"><span class="header-section-number">2.3</span> Problem 3: Trigger that soft deletes the artworks</h2>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Since data in the view cannot be modified directly, create a trigger on the <code>current_collections</code> view that soft deletes the data from the underlying <code>collections</code> table, as per the idea of soft deletion discussed above. The trigger must be activated when any data is attempted to be deleted from the view. Demonstrate this trigger by selling all the artworks that have no acquired date.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="problem-4-trigger-that-reverses-the-soft-deletion-of-artworks"><span class="header-section-number">2.4</span> Problem 4: Trigger that reverses the soft deletion of artworks</h2>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Imagine the items sold in the task 3 are rebought. Now, create a trigger on the <code>current_collections</code> view that reverses the soft deletion, i.e., setting the corresponding row’s deleted value to 0 in the underlying <code>collections</code> table to indicate that the items are again available. The trigger must be executed when any soft-deleted data is attempted to be inserted into the <code>current_collections</code> view.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="problem-5-trigger-that-inserts-new-artworks" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="problem-5-trigger-that-inserts-new-artworks"><span class="header-section-number">2.5</span> Problem 5: Trigger that inserts new artworks</h2>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>Create a trigger on the <code>current_collections</code> view that inserts new data into the underlying <code>collections</code> table when any new data is attempted to be inserted into the view. Demonstrate this trigger by buying new artworks ‘Adoration of the Magi’ (accession_number: 1971.71, acquired: 2022-01-11) and ‘Agony in the Garden’ (accession_number: 68.206, acquired: 2022-05-01).</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="solution-to-problem-1-soft-deleting-the-artworks" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Solution to Problem 1: Soft deleting the artworks</h1>
+<p>First, let’s query the <code>collections</code> table.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We can see that the <code>collections</code> table does not have a “deleted” column yet to implement soft deletion, so we need to add it first. The default value 0 indicates that the item is available for sale.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> <span class="ot">"collections"</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ADD</span> <span class="kw">COLUMN</span> <span class="ot">"deleted"</span> <span class="dt">INTEGER</span> <span class="kw">DEFAULT</span> <span class="dv">0</span>;</span></code></pre></div>
+</details>
+</div>
+<p>We can verify that this worked by querying the <code>collections</code> table.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Now, let us perform a soft delete on the artworks “Farmers working at dawn” and “Tile Lunette” by updating their “deleted” column to 1.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> <span class="ot">"collections"</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> <span class="ot">"deleted"</span> <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> <span class="ot">"title"</span> <span class="kw">IN</span> (<span class="st">'Farmers working at dawn'</span>, <span class="st">'Tile Lunette'</span>);</span></code></pre></div>
+</details>
+</div>
+<p>We can verify that this worked by querying the <code>collections</code> table to check for soft deletion.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="solution-to-problem-2-view-that-shows-only-available-artworks" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Solution to Problem 2: View that shows only available artworks</h1>
+<p>We will create a view named <code>current_collections</code> to display only the items that are available for sale by selecting the rows with a “deleted” column value of 0 from the <code>collections</code> table.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">VIEW</span> <span class="ot">"current_collections"</span> <span class="kw">AS</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="ot">"id"</span>, <span class="ot">"title"</span>, <span class="ot">"accession_number"</span>, <span class="ot">"acquired"</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> <span class="ot">"collections"</span> </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> <span class="ot">"deleted"</span> <span class="op">=</span> <span class="dv">0</span>;</span></code></pre></div>
+</details>
+</div>
+<p>We will query the <code>current_collections</code> view to verify that artworks “Farmers working at dawn” and “Tile Lunette”, which were soft deleted, are not present.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> <span class="ot">"current_collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>8 records</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="solution-to-problem-3-trigger-that-soft-deletes-the-artworks" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Solution to Problem 3: Trigger that soft deletes the artworks</h1>
+<p>Every time we attempt to delete rows from the <code>current_collections</code> view, the trigger named <code>delete</code> below will instead update the “deleted” column of the row to 1 in the underlying <code>collections</code> table, thus completing the soft deletion.</p>
+<p>We use the keyword OLD within our UPDATE clause to indicate that the ID of the row updated in <code>collections</code> table should be the same as the ID of the row we are trying to delete from the <code>current_collections</code> view.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TRIGGER</span> <span class="ot">"delete"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSTEAD</span> <span class="kw">OF</span> <span class="kw">DELETE</span> <span class="kw">ON</span> <span class="ot">"current_collections"</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="cf">FOR</span> <span class="kw">EACH</span> <span class="kw">ROW</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">UPDATE</span> <span class="ot">"collections"</span> <span class="kw">SET</span> <span class="ot">"deleted"</span> <span class="op">=</span> <span class="dv">1</span> </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> <span class="ot">"id"</span> <span class="op">=</span> <span class="kw">OLD</span>.<span class="ot">"id"</span>;</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+</details>
+</div>
+<p>let’s query the <code>current_collections</code> view first to have an idea of which items have no acquired date before implementing the trigger.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> <span class="ot">"current_collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>8 records</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We notice that ‘Imaginative Landscape’ and ‘Country Road with Culvert’ do not have acquired date. Now, we will delete the artworks that have no acquired date from the <code>current_collections</code> view to activate the trigger.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">DELETE</span> <span class="kw">FROM</span> <span class="ot">"current_collections"</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> <span class="ot">"acquired"</span> <span class="kw">IS</span> <span class="kw">NULL</span>;</span></code></pre></div>
+</details>
+</div>
+<p>We can verify that this worked by querying the <code>current_collections</code> view and <code>collections</code> table to check for soft deletion.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> <span class="ot">"current_collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>6 records</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="solution-to-problem-4-trigger-that-reverses-the-soft-deletion-of-artworks" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Solution to Problem 4: Trigger that reverses the soft deletion of artworks</h1>
+<p>We will create a trigger named <code>insert_when_exists</code> to handle the situation where we try to insert a row into a view that already exists in the underlying table but was soft deleted.</p>
+<p>The <code>WHEN</code> keyword is used to check if the “accession number” of the artwork already exists in the <code>collections</code> table. This works because an “accession number” uniquely identifies every piece of art in this table. If the artwork does exist in the underlying table, we set its “deleted” value to 0, indicating a reversal of the soft deletion.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TRIGGER</span> <span class="ot">"insert_when_exists"</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSTEAD</span> <span class="kw">OF</span> <span class="kw">INSERT</span> <span class="kw">ON</span> <span class="ot">"current_collections"</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">FOR</span> <span class="kw">EACH</span> <span class="kw">ROW</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">WHEN</span> <span class="kw">NEW</span>.<span class="ot">"accession_number"</span> <span class="kw">IN</span> (</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span> <span class="ot">"accession_number"</span> <span class="kw">FROM</span> <span class="ot">"collections"</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">UPDATE</span> <span class="ot">"collections"</span> </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SET</span> <span class="ot">"deleted"</span> <span class="op">=</span> <span class="dv">0</span> </span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> <span class="ot">"accession_number"</span> <span class="op">=</span> <span class="kw">NEW</span>.<span class="ot">"accession_number"</span>;</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+</details>
+</div>
+<p>Before using trigger, we can see that the values in the “deleted” column for ‘Imaginative Landscape’ and ‘Country Road with Culvert’ are 1, indicating that they were sold.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Now, let’s rebuy the artworks ‘Imaginative landscape’ (accession_number: 56.496, acquired: NULL) and ‘Country road with culvert’(accession_number: 76.431, acquired: NULL) and execute the trigger.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> <span class="ot">"current_collections"</span> (<span class="ot">"title"</span>, <span class="ot">"accession_number"</span>, <span class="ot">"acquired"</span>) </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">VALUES</span> </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>(<span class="st">'Imaginative landscape'</span>, <span class="st">'56.496'</span>, <span class="kw">NULL</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>(<span class="st">'Country road with culvert'</span>, <span class="st">'76.431'</span>, <span class="kw">NULL</span>);</span></code></pre></div>
+</details>
+</div>
+<p>We can verify that this worked by checking whether the “deleted” column values of ‘Imaginative landscape’ and ‘Country road with culvert’ are switched back to 0 from 1 in the <code>collections</code> table.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="solution-to-problem-5-trigger-that-inserts-new-artworks" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Solution to Problem 5: Trigger that inserts new artworks</h1>
+<p>We will create a trigger named <code>insert_when_new</code> to handle the situation where we try to insert a row into a view that does not exist in the underlying table.</p>
+<p>When the “accession number” of the inserted data is not already present within <code>collections</code> table, it inserts the row into the table.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TRIGGER</span> <span class="ot">"insert_when_new"</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSTEAD</span> <span class="kw">OF</span> <span class="kw">INSERT</span> <span class="kw">ON</span> <span class="ot">"current_collections"</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="cf">FOR</span> <span class="kw">EACH</span> <span class="kw">ROW</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="cf">WHEN</span> <span class="kw">NEW</span>.<span class="ot">"accession_number"</span> <span class="kw">NOT</span> <span class="kw">IN</span> (</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span> <span class="ot">"accession_number"</span> <span class="kw">FROM</span> <span class="ot">"collections"</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">INSERT</span> <span class="kw">INTO</span> <span class="ot">"collections"</span> (<span class="ot">"title"</span>, <span class="ot">"accession_number"</span>, <span class="ot">"acquired"</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">VALUES</span> (<span class="kw">NEW</span>.<span class="ot">"title"</span>, <span class="kw">NEW</span>.<span class="ot">"accession_number"</span>, <span class="kw">NEW</span>.<span class="ot">"acquired"</span>);</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+</details>
+</div>
+<p>Before executing this trigger, let’s query the <code>collections</code> table to see what items are present.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Now, let’s execute the trigger by inserting newly bought artworks ‘Adoration of the Magi’ (accession_number: 1971.71, acquired: 2022-01-11) and ‘Agony in the Garden’ (accession_number: 68.206, acquired: 2022-05-01).</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> <span class="ot">"current_collections"</span> (<span class="ot">"title"</span>, <span class="ot">"accession_number"</span>, <span class="ot">"acquired"</span>) </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">VALUES</span> </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>(<span class="st">'Adoration of the Magi'</span>, <span class="st">'1971.71'</span>, <span class="st">'2022-01-11'</span>),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>(<span class="st">'Agony in the Garden'</span>, <span class="st">'68.206'</span>, <span class="st">'2022-05-01'</span>);</span></code></pre></div>
+</details>
+</div>
+<p>We can verify that this worked by querying the <code>current_collections</code> view and <code>collections</code> table to check for insertion.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> <span class="ot">"current_collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">Adoration of the Magi</td>
+<td style="text-align: left;">1971.71</td>
+<td style="text-align: left;">2022-01-11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">Agony in the Garden</td>
+<td style="text-align: left;">68.206</td>
+<td style="text-align: left;">2022-05-01</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> <span class="ot">"collections"</span>;</span></code></pre></div>
+</details>
+<div class="knitsql-table">
+<table class="table table-sm table-striped small">
+<caption>Displaying records 1 - 10</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 41%">
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">id</th>
+<th style="text-align: left;">title</th>
+<th style="text-align: left;">accession_number</th>
+<th style="text-align: left;">acquired</th>
+<th style="text-align: right;">deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Profusion of flowers</td>
+<td style="text-align: left;">56.257</td>
+<td style="text-align: left;">1956-04-12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Farmers working at dawn</td>
+<td style="text-align: left;">11.6152</td>
+<td style="text-align: left;">1911-08-03</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Spring outing</td>
+<td style="text-align: left;">14.76</td>
+<td style="text-align: left;">1914-01-08</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Imaginative landscape</td>
+<td style="text-align: left;">56.496</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Peonies and butterfly</td>
+<td style="text-align: left;">06.1899</td>
+<td style="text-align: left;">1906-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Tile Lunette</td>
+<td style="text-align: left;">06.2437</td>
+<td style="text-align: left;">1906-11-08</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Statuette of a shrew</td>
+<td style="text-align: left;">01.105</td>
+<td style="text-align: left;">1901-02-11</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Country road with culvert</td>
+<td style="text-align: left;">76.431</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Family of acrobats</td>
+<td style="text-align: left;">1974.352</td>
+<td style="text-align: left;">1933-03-30</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Bacchic scene with minotaur</td>
+<td style="text-align: left;">1974.379</td>
+<td style="text-align: left;">1933-05-18</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../projects/SQLPackages/packages.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">1. Using SQL to find the missing packages in the mail delivery service’s database</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../projects/ParseTrees/ParsetreesNnounphrases.html" class="pagination-link">
+        <span class="nav-page-text">1. Generating parse trees and extracting noun phrases</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,351 @@
+---
+title: 2. Soft deletions, views, and triggers in the context of a museum’s database
+
+---
+
+
+# Museum of Fine Arts (MFA)
+
+
+In this project, we will explore the concepts of soft deletions, views, and triggers in the context of the Museum of Fine Arts (MFA). The MFA is a century-old museum housing numerous historical and contemporary artifacts and artworks. It manages its extensive collection through the MFA database, which tracks thousands of items. However, for the purpose of this project, we will work with a subset of the database containing only ten items in the `collections` table. 
+
+
+
+
+## Schema
+
+![ER diagram of the MFA database](ERmfa.png){fig-align="left"}
+
+The Schema of the MFA database is shown above. The `collections` table contains the following columns:
+
+* `id`, which is the ID of the table that serves as the primary key
+* `title`, which is the name of the art piece
+* `accession_number`, which is a unique ID used by the museum internally
+* `acquired`, which indicates when the art was acquired
+
+
+Let us now establish the SQLite connection to the database using DBI
+package.
+
+```{r}
+#| warning: false
+
+library(DBI)
+con <- dbConnect(RSQLite::SQLite(), "mfa.db") # establish SQLite connection to the database
+
+```
+```{sql, connection = con}
+#| echo: false
+#| output: false
+
+CREATE TABLE "collections" (
+    "id" INTEGER,
+    "title" TEXT NOT NULL,
+    "accession_number" TEXT NOT NULL UNIQUE,
+    "acquired" NUMERIC,
+    PRIMARY KEY("id")
+);
+
+```
+```{sql, connection = con}
+#| echo: false
+#| output: false
+
+
+INSERT INTO "collections" ("title", "accession_number", "acquired") 
+VALUES 
+('Profusion of flowers', '56.257', '1956-04-12'),
+('Farmers working at dawn','11.6152', '1911-08-03'),
+('Spring outing', '14.76','1914-01-08'),
+('Imaginative landscape', '56.496', NULL),
+('Peonies and butterfly', '06.1899', '1906-01-01'),
+('Tile Lunette', '06.2437', '1906-11-08'),
+('Statuette of a shrew', '01.105', '1901-02-11'),
+('Country road with culvert', '76.431', NULL),
+('Family of acrobats', '1974.352', '1933-03-30'),
+('Bacchic scene with minotaur', '1974.379', '1933-05-18');
+
+```
+
+
+The data of the `collections` table is as follows:
+
+```{sql, connection = con}
+SELECT * FROM "collections";
+
+```
+
+# Problems Involving Soft Deletions, Views and Triggers 
+
+Imagine you are a database administrator of the MFA and solve the following problems:
+
+## Problem 1: Soft deleting the artworks
+
+::: {.callout-note appearance="minimal"}
+Implement a soft deletion of items in the `collections` table, where a log of sold artworks is kept in the column named "deleted" instead of completely removing them from the table, so that the records of artworks in the collection are not lost. The "deleted" column in the `collections` table must have a value of 0 for the available items for sale and a value of 1 for the items that have been sold. Imagine the artworks "Farmers Working at Dawn" and "Tile Lunette" were sold, and implement this idea of soft deletion on them.
+:::
+
+## Problem 2: View that shows only available artworks
+
+::: {.callout-note appearance="minimal"}
+Create a view named `current_collections` using all the columns of the collections table except the "deleted" column, so that the view can be used to display only the information about the artworks that are available for sale.
+:::
+
+## Problem 3: Trigger that soft deletes the artworks
+
+::: {.callout-note appearance="minimal"}
+Since data in the view cannot be modified directly, create a trigger on the `current_collections` view that soft deletes the data from the underlying `collections` table, as per the idea of soft deletion discussed above. The trigger must be activated when any data is attempted to be deleted from the view. Demonstrate this trigger by selling all the artworks that have no acquired date.
+:::
+
+## Problem 4: Trigger that reverses the soft deletion of artworks
+
+::: {.callout-note appearance="minimal"}
+Imagine the items sold in the task 3 are rebought. Now, create a trigger on the `current_collections` view that reverses the soft deletion, i.e., setting the corresponding row's deleted value to 0 in the underlying `collections` table to indicate that the items are again available. The trigger must be executed when any soft-deleted data is attempted to be inserted into the `current_collections` view.
+:::
+
+## Problem 5: Trigger that inserts new artworks
+
+::: {.callout-note appearance="minimal"}
+Create a trigger on the `current_collections` view that inserts new data into the underlying `collections` table when any new data is attempted to be inserted into the view. Demonstrate this trigger by buying new artworks 'Adoration of the Magi' (accession_number: 1971.71, acquired: 2022-01-11) and 'Agony in the Garden' (accession_number: 68.206, acquired: 2022-05-01).
+:::
+
+
+# Solution to Problem 1: Soft deleting the artworks
+
+
+First, let's query the `collections` table.
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+We can see that the `collections` table does not have a "deleted" column yet to implement soft deletion, 
+so we need to add it first. The default value 0 indicates that the item is available for sale.
+
+
+```{sql, connection = con}
+ALTER TABLE "collections" 
+ADD COLUMN "deleted" INTEGER DEFAULT 0;
+
+```
+
+We can verify that this worked by querying the `collections` table.
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+
+Now, let us perform a soft delete on the artworks “Farmers working at dawn” and "Tile Lunette" by updating their "deleted" column to 1.
+
+
+```{sql, connection = con}
+UPDATE "collections" 
+SET "deleted" = 1
+WHERE "title" IN ('Farmers working at dawn', 'Tile Lunette');
+
+
+```
+
+We can verify that this worked by querying the `collections` table to check for soft deletion.
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+# Solution to Problem 2: View that shows only available artworks
+
+
+We will create a view named `current_collections` to display only the items that are available for sale
+by selecting the rows with a "deleted" column value of 0 from the `collections` table.
+
+
+```{sql, connection = con}
+CREATE VIEW "current_collections" AS
+SELECT "id", "title", "accession_number", "acquired" 
+FROM "collections" 
+WHERE "deleted" = 0;
+
+```
+
+We will query the `current_collections` view to verify that artworks “Farmers working at dawn” and "Tile Lunette", which were soft deleted, are not present.
+
+
+
+```{sql, connection = con}
+SELECT * FROM "current_collections";
+
+```
+
+# Solution to Problem 3: Trigger that soft deletes the artworks
+
+Every time we attempt to delete rows from the `current_collections` view, the trigger named `delete` below will instead update the "deleted" column of the row to 1 in the underlying `collections` table, thus completing the soft deletion. 
+
+We use the keyword OLD within our UPDATE clause to indicate that the ID of the row updated in `collections` table should be the same as the ID of the row we are trying to delete from the `current_collections` view.
+
+
+```{sql, connection = con}
+CREATE TRIGGER "delete"
+INSTEAD OF DELETE ON "current_collections"
+FOR EACH ROW
+BEGIN
+    UPDATE "collections" SET "deleted" = 1 
+    WHERE "id" = OLD."id";
+END;
+
+```
+
+let's query the `current_collections` view first to have an idea of which items have no acquired date before implementing the trigger.
+
+```{sql, connection = con}
+SELECT * FROM "current_collections";
+
+```
+
+We notice that 'Imaginative Landscape' and 'Country Road with Culvert' do not have acquired date.
+Now, we will delete the artworks that have no acquired date from the `current_collections` view to activate the trigger.
+
+```{sql, connection = con} 
+DELETE FROM "current_collections" 
+WHERE "acquired" IS NULL;
+
+```
+
+We can verify that this worked by querying the `current_collections` view and `collections` table to check for soft deletion.
+
+
+```{sql, connection = con}
+SELECT * FROM "current_collections";
+
+```
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+# Solution to Problem 4: Trigger that reverses the soft deletion of artworks
+
+We will create a trigger named `insert_when_exists` to handle the situation where we try to insert a row into a view that already exists in the underlying table but was soft deleted. 
+
+The `WHEN` keyword is used to check if the "accession number" of the artwork already exists in the `collections` table. This works because an "accession number" uniquely identifies every piece of art in this table. If the artwork does exist in the underlying table, we set its "deleted" value to 0, indicating a reversal of the soft deletion.
+
+
+```{sql, connection = con}
+CREATE TRIGGER "insert_when_exists"
+INSTEAD OF INSERT ON "current_collections"
+FOR EACH ROW 
+WHEN NEW."accession_number" IN (
+    SELECT "accession_number" FROM "collections"
+)
+BEGIN
+    UPDATE "collections" 
+    SET "deleted" = 0 
+    WHERE "accession_number" = NEW."accession_number";
+END;
+
+```
+
+Before using trigger, we can see that the values in the "deleted" column for 'Imaginative Landscape' and 'Country Road with Culvert' are 1, indicating that they were sold.
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+Now, let's rebuy the artworks 'Imaginative landscape' (accession_number: 56.496, acquired: NULL)
+and 'Country road with culvert'(accession_number: 76.431, acquired: NULL) and execute the trigger.
+
+
+```{sql, connection = con}
+INSERT INTO "current_collections" ("title", "accession_number", "acquired") 
+VALUES 
+('Imaginative landscape', '56.496', NULL),
+('Country road with culvert', '76.431', NULL);
+
+```
+
+We can verify that this worked by checking whether the "deleted" column values of 'Imaginative landscape' and 'Country road with culvert' are switched back to 0 from 1 in the `collections` table.
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+# Solution to Problem 5: Trigger that inserts new artworks
+
+We will create a trigger named `insert_when_new` to handle the situation where we try to insert a row into a view that does not exist in the underlying table. 
+
+When the "accession number" of the inserted data is not already present within `collections` table, it inserts the row into the table.
+
+
+```{sql, connection = con}
+CREATE TRIGGER "insert_when_new"
+INSTEAD OF INSERT ON "current_collections"
+FOR EACH ROW
+WHEN NEW."accession_number" NOT IN (
+    SELECT "accession_number" FROM "collections"
+)
+BEGIN
+    INSERT INTO "collections" ("title", "accession_number", "acquired")
+    VALUES (NEW."title", NEW."accession_number", NEW."acquired");
+END;
+
+```
+
+Before executing this trigger, let's query the `collections` table to see what items are present.
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+
+Now, let's execute the trigger by inserting newly bought artworks 'Adoration of the Magi' (accession_number: 1971.71, acquired: 2022-01-11) and 'Agony in the Garden' (accession_number: 68.206, acquired: 2022-05-01).
+
+
+```{sql, connection = con}
+INSERT INTO "current_collections" ("title", "accession_number", "acquired") 
+VALUES 
+('Adoration of the Magi', '1971.71', '2022-01-11'),
+('Agony in the Garden', '68.206', '2022-05-01');
+
+```
+
+We can verify that this worked by querying the `current_collections` view and `collections` table to check for insertion.
+
+
+```{sql, connection = con}
+SELECT * FROM "current_collections";
+
+```
+
+
+```{sql, connection = con}
+select * from "collections";
+
+```
+```{sql, connection = con}
+#| echo: false
+#| output: false
+
+DROP TABLE "collections";
+
+```
+
+```{sql, connection = con}
+#| echo: false
+#| output: false
+
+DROP VIEW "current_collections";
+
+```
+

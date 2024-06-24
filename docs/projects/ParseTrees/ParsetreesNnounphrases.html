@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>1. Generating parse trees and extracting noun phrases</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../projects/MNIST/mnist.html" rel="next">
+<link href="../../projects/SQLMuseum/mfa.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Home</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../../projects/SQLMuseum/mfa.html" rel="" target="" aria-current="page">
+ <span class="menu-text">Projects</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools ms-auto">
+    <a href="https://www.linkedin.com/in/ram-kuchana/" rel="" title="Linkedin" class="quarto-navigation-tool px-1" aria-label="Linkedin"><i class="bi bi-linkedin"></i></a>
+    <a href="mailto:rams9795@gmail.com" rel="" title="Email" class="quarto-navigation-tool px-1" aria-label="Email"><i class="bi bi-envelope"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../projects/ParseTrees/ParsetreesNnounphrases.html">NLP Projects</a></li><li class="breadcrumb-item"><a href="../../projects/ParseTrees/ParsetreesNnounphrases.html">1. Generating parse trees and extracting noun phrases</a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">SQL Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/SQLPackages/packages.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Using SQL to find the missing packages in the mail delivery service’s database</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/SQLMuseum/mfa.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">2. Soft deletions, views, and triggers in the context of a museum’s database</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text">NLP Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/ParseTrees/ParsetreesNnounphrases.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">1. Generating parse trees and extracting noun phrases</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text">ML Projects</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/MNIST/mnist.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Nearest neighbor classifier for handwritten digit recognition</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../projects/NimGame/NimGame.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">2. Training an AI to play a game using reinforcement learning</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#context-free-grammar-cfg" id="toc-context-free-grammar-cfg" class="nav-link active" data-scroll-target="#context-free-grammar-cfg"><span class="header-section-number">1</span> Context-free grammar (CFG)</a>
+  <ul class="collapse">
+  <li><a href="#cfg-rules" id="toc-cfg-rules" class="nav-link" data-scroll-target="#cfg-rules"><span class="header-section-number">1.1</span> CFG rules</a>
+  <ul class="collapse">
+  <li><a href="#terminal-symbols" id="toc-terminal-symbols" class="nav-link" data-scroll-target="#terminal-symbols"><span class="header-section-number">1.1.1</span> Terminal symbols</a></li>
+  <li><a href="#non-terminal-symbols" id="toc-non-terminal-symbols" class="nav-link" data-scroll-target="#non-terminal-symbols"><span class="header-section-number">1.1.2</span> Non-terminal symbols</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#generating-parse-trees-and-extracting-noun-phrases" id="toc-generating-parse-trees-and-extracting-noun-phrases" class="nav-link" data-scroll-target="#generating-parse-trees-and-extracting-noun-phrases"><span class="header-section-number">2</span> Generating parse trees and extracting noun phrases</a></li>
+  <li><a href="#testing-the-parser" id="toc-testing-the-parser" class="nav-link" data-scroll-target="#testing-the-parser"><span class="header-section-number">3</span> Testing the parser</a></li>
+  <li><a href="#further-analysis-and-inference" id="toc-further-analysis-and-inference" class="nav-link" data-scroll-target="#further-analysis-and-inference"><span class="header-section-number">4</span> Further analysis and inference</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">1. Generating parse trees and extracting noun phrases</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>In Natural Language Processing (NLP), parsing refers to the process of analyzing a sentence to identify its grammatical structure. This is useful for a number of reasons, such as understanding sentence structure, resolving ambiguities in sentences, and better extraction of information from sentences.</p>
+<p>In this project, we will work with the following English sentences and apply the context-free grammar (CFG) formalism to generate a parse tree or syntactic tree that represents the syntactic structure of the given sentences. Then, we will extract noun phrases from those sentences.</p>
+<p>Sentences to analyze:</p>
+<ol type="1">
+<li>Holmes sat.</li>
+<li>Holmes lit a pipe.</li>
+<li>We arrived the day before Thursday.</li>
+<li>Holmes sat in the red armchair and he chuckled.</li>
+<li>My companion smiled an enigmatical smile.</li>
+<li>Holmes chuckled to himself.</li>
+<li>She never said a word until we were at the door here.</li>
+<li>Holmes sat down and lit his pipe.</li>
+<li>I had a country walk on Thursday and came home in a dreadful mess.</li>
+<li>I had a little moist red paint in the palm of my hand.</li>
+</ol>
+<section id="context-free-grammar-cfg" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Context-free grammar (CFG)</h1>
+<p>Context-free grammar (CFG) is a type of formal grammar used to define the syntax rules of languages, particularly programming languages and natural languages. CFG consists of a set of rules, i.e., rewriting/production rules, that describe how sentences must be generated. These rules are used to construct parse trees that represent the syntactic structure of sentences.</p>
+<p>The objective of CFG is to start with a nonterminal symbol S (representing a sentence) and repeatedly apply rewriting rules until a complete sentence of terminal symbols (i.e., words) is generated. For example, a simple rule like S → N V indicates that the S symbol can be rewritten as N V (a noun followed by a verb). If we also have the rule N → “Holmes” and the rule V → “sat”, we can generate the complete sentence “Holmes sat.” However, it’s important to note that this simple rule can only generate sentences that have a noun followed by a verb. Therefore, for this project, we must define rules in such a way that they capture all the complexity of the given sentences above and generalize across them without over-generating or under-generating.</p>
+<section id="cfg-rules" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="cfg-rules"><span class="header-section-number">1.1</span> CFG rules</h2>
+<p>A rewriting rule in a CFG has the following form:</p>
+<p>𝐴 → 𝛼</p>
+<p>Where: * 𝐴 is a non-terminal symbol and * 𝛼 is a string consisting of terminal and/or non-terminal symbols.</p>
+<p>Now, let’s define a concrete set of rules for generating terminal symbols and non-terminal symbols.</p>
+<section id="terminal-symbols" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="terminal-symbols"><span class="header-section-number">1.1.1</span> Terminal symbols</h3>
+<p>Terminal symbols represent the words in the sentence. The rules for generating these terminal symbols are defined in the global variable <code>TERMINALS</code>, which includes all the words of the given sentences to analyze. Notice that <code>Adj</code> is a nonterminal symbol that generates adjectives, <code>Adv</code> generates adverbs, <code>Conj</code> generates conjunctions, <code>Det</code> generates determiners, <code>N</code> generates nouns (spread across multiple lines for readability), <code>P</code> generates prepositions, and <code>V</code> generates verbs. The vertical bar <code>|</code> denotes all the terminal symbol alternatives for that particular non-terminal symbol.</p>
+<div class="cell" data-execution_count="1">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>TERMINALS <span class="op">=</span> <span class="st">"""</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="st">Adj -&gt; "country" | "dreadful" | "enigmatical" | "little" | "moist" | "red"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="st">Adv -&gt; "down" | "here" | "never"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">Conj -&gt; "and" | "until"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">Det -&gt; "a" | "an" | "his" | "my" | "the"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">N -&gt; "armchair" | "companion" | "day" | "door" | "hand" | "he" | "himself"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">N -&gt; "holmes" | "home" | "i" | "mess" | "paint" | "palm" | "pipe" | "she"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">N -&gt; "smile" | "thursday" | "walk" | "we" | "word" </span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="st">P -&gt; "at" | "before" | "in" | "of" | "on" | "to" </span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="st">V -&gt; "arrived" | "came" | "chuckled" | "had" | "lit" | "said" | "sat"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="st">V -&gt; "smiled" | "tell" | "were" </span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span></span></code></pre></div>
+</details>
+</div>
+</section>
+<section id="non-terminal-symbols" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" class="anchored" data-anchor-id="non-terminal-symbols"><span class="header-section-number">1.1.2</span> Non-terminal symbols</h3>
+<p>Non-terminal symbols are syntactic variables that represent sets of strings. Common non-terminals include parts of speech (e.g., noun, verb) and phrases (e.g., noun phrase, verb phrase). These symbols are defined in the global variable called <code>NONTERMINALS</code> and it contains all the rules for generating non-terminal symbols.</p>
+<p>The description of symbols is as follows: <code>S</code> represents a complete sentence, <code>NP</code> represents a noun phrase, <code>VP</code> represents a verb phrase, <code>PP</code> represents a prepositional phrase, <code>Det</code> represents a determiner, and <code>AP</code> represents an adjective phrase. Each alternative separated by the vertical bar <code>|</code> represents a different way that a non-terminal can be replaced by a sequence of terminals and/or non-terminals. We can notice that all these rules are self-explanatory. For example, a rule like AP → Adj | Adj AP indicates that an adjective phrase can be formed either by an adjective or by an adjective followed by an adjective phrase.</p>
+<div class="cell" data-execution_count="2">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>NONTERMINALS <span class="op">=</span> <span class="st">"""</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="st">S -&gt; NP VP | VP NP | S Conj S</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">NP -&gt; N | Det N | NP PP | Det AP N</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="st">VP -&gt; V | V NP | V PP | Adv VP | VP Adv</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="st">AP -&gt; Adj | Adj AP</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="st">PP -&gt; P NP</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span></span></code></pre></div>
+</details>
+</div>
+</section>
+</section>
+</section>
+<section id="generating-parse-trees-and-extracting-noun-phrases" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Generating parse trees and extracting noun phrases</h1>
+<p>Now that we have defined grammar rules for generating sentences, let’s use NLTK module to parse that context-free grammar.</p>
+<div class="cell" data-execution_count="3">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import the required modules</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> nltk</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create grammar from pre-defined symbols and parse it</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>grammar <span class="op">=</span> nltk.CFG.fromstring(NONTERMINALS <span class="op">+</span> TERMINALS)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>parser <span class="op">=</span> nltk.ChartParser(grammar)</span></code></pre></div>
+</details>
+</div>
+<p>Next, we will define a <code>main</code> function that accepts a sentence as input and prints out the parse trees and noun phrases of that sentence. The input sentence is preprocessed using the <code>preprocess</code> function and then parsed according to the context-free grammar rules we defined above. After that, the noun phrases are extracted from the sentence using the <code>np_chunk</code> function.</p>
+<div class="cell" data-execution_count="4">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main(sentence):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" Main Function</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Takes argument from command line, </span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Parse the sentence and recognize the structure</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">    Print out the structure and np_chunks</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert input into list of words</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    tokenized_sentence <span class="op">=</span> preprocess(sentence)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Attempt to parse sentence</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        trees <span class="op">=</span> <span class="bu">list</span>(parser.parse(tokenized_sentence))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> error:</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(error)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> trees:</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"Could not parse the sentence."</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Sentence: </span><span class="sc">{</span>sentence<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Print each tree with noun phrase chunks</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> tree <span class="kw">in</span> trees:</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        tree.pretty_print()</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"Noun Phrase Chunks:"</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> np_c <span class="kw">in</span> np_chunk(tree):</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">" "</span>.join(np_c.flatten()))</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span></code></pre></div>
+</details>
+</div>
+<p>The <code>preprocess</code> function takes a sentence as input and returns a lowercased list of its words. Any word that doesn’t contain at least one alphabetic character (e.g., 3 or .) is excluded from the returned list. This function uses NLTK’s <code>word_tokenize</code> function to perform tokenization.</p>
+<div class="cell" data-execution_count="5">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> preprocess(sentence):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Convert `sentence` into a list of its words.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">    </span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Pre-process sentence by converting all characters to lowercase</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">    and removing any word that does not contain at least one alphabetic</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">    character.</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Lowercase the sentence</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    sentence <span class="op">=</span> sentence.lower()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tokenize each element in the sentence</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    word_list <span class="op">=</span> nltk.word_tokenize(sentence)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Remove all words that does not contain at least one alphabetic char</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> word <span class="kw">in</span> word_list:</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="bu">any</span>(char.isalpha() <span class="cf">for</span> char <span class="kw">in</span> word):</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>            word_list.remove(word)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> word_list</span></code></pre></div>
+</details>
+</div>
+<p>The <code>np_chunk</code> function accepts an <code>nltk.tree</code> object with the label S, representing the syntax of a sentence as input, and returns a list of all the noun phrase chunks in that sentence. A noun phrase chunk is a subtree of the original tree with the label <code>NP</code> and does not itself contain other noun phrases as subtrees. For example, if “the home” is a noun phrase chunk, then “the armchair in the home” is not a noun phrase chunk because the latter contains the former as a subtree.</p>
+<div class="cell" data-execution_count="6">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> np_chunk(tree):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Return a list of all noun phrase chunks in the sentence tree.</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">    </span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">    A noun phrase chunk is defined as any subtree of the sentence</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">    whose label is "NP" that does not itself contain any other</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">    noun phrases as subtrees.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    np_chunks <span class="op">=</span> []</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># For each subtree, check if its label is "NP" and no child is "NP"</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> subtree <span class="kw">in</span> tree.subtrees():</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> subtree.label() <span class="op">==</span> <span class="st">"NP"</span> <span class="kw">and</span> <span class="kw">not</span> <span class="bu">any</span>(child.label() <span class="op">==</span> <span class="st">"NP"</span> <span class="cf">for</span> child <span class="kw">in</span> subtree):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            np_chunks.append(subtree)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np_chunks</span></code></pre></div>
+</details>
+</div>
+</section>
+<section id="testing-the-parser" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Testing the parser</h1>
+<p>Now that we have our model, let’s test it with all of the given sentences.</p>
+<div class="cell" data-execution_count="7">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make tuple of given sentences</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sentence_corpus <span class="op">=</span> (</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"1. Holmes sat."</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2. Holmes lit a pipe."</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"3. We arrived the day before Thursday."</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"4. Holmes sat in the red armchair and he chuckled."</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"5. My companion smiled an enigmatical smile."</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"6. Holmes chuckled to himself."</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"7. She never said a word until we were at the door here."</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"8. Holmes sat down and lit his pipe."</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"9. I had a country walk on Thursday and came home in a dreadful mess."</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"10. I had a little moist red paint in the palm of my hand."</span>,    </span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+</details>
+</div>
+<div class="cell" data-execution_count="8">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># call the `main` function on each sentence</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, sentence <span class="kw">in</span> <span class="bu">enumerate</span>(sentence_corpus):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    main(sentence)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Seperate the sentences with '*'</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i<span class="op">+</span><span class="dv">1</span> <span class="op">&lt;</span> <span class="bu">len</span>(sentence_corpus):</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"*"</span> <span class="op">*</span> <span class="dv">70</span>)</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sentence: 1. Holmes sat.
+        S     
+   _____|___   
+  NP        VP
+  |         |  
+  N         V 
+  |         |  
+holmes     sat
+
+Noun Phrase Chunks:
+holmes
+
+**********************************************************************
+Sentence: 2. Holmes lit a pipe.
+            S              
+   _________|___            
+  |             VP         
+  |      _______|___        
+  NP    |           NP     
+  |     |        ___|___    
+  N     V      Det      N  
+  |     |       |       |   
+holmes lit      a      pipe
+
+Noun Phrase Chunks:
+holmes
+a pipe
+
+**********************************************************************
+Sentence: 3. We arrived the day before Thursday.
+             S                                 
+  ___________|_______                           
+ |                   VP                        
+ |      _____________|___                       
+ |     |                 NP                    
+ |     |          _______|__________            
+ |     |         |                  PP         
+ |     |         |             _____|_____      
+ NP    |         NP           |           NP   
+ |     |      ___|___         |           |     
+ N     V    Det      N        P           N    
+ |     |     |       |        |           |     
+ we arrived the     day     before     thursday
+
+Noun Phrase Chunks:
+we
+the day
+thursday
+
+**********************************************************************
+Sentence: 4. Holmes sat in the red armchair and he chuckled.
+                        S                                
+             ___________|_____________________            
+            S                        |        |          
+   _________|___                     |        |           
+  |             VP                   |        |          
+  |      _______|___                 |        |           
+  |     |           PP               |        |          
+  |     |    _______|___             |        |           
+  |     |   |           NP           |        S          
+  |     |   |    _______|_____       |     ___|_____      
+  NP    |   |   |       AP    |      |    NP        VP   
+  |     |   |   |       |     |      |    |         |     
+  N     V   P  Det     Adj    N     Conj  N         V    
+  |     |   |   |       |     |      |    |         |     
+holmes sat  in the     red armchair and   he     chuckled
+
+Noun Phrase Chunks:
+holmes
+the red armchair
+he
+
+**********************************************************************
+Sentence: 5. My companion smiled an enigmatical smile.
+                    S                             
+      ______________|_________                     
+     |                        VP                  
+     |               _________|_______             
+     |              |                 NP          
+     |              |      ___________|________    
+     NP             |     |           AP       |  
+  ___|______        |     |           |        |   
+Det         N       V    Det         Adj       N  
+ |          |       |     |           |        |   
+ my     companion smiled  an     enigmatical smile
+
+Noun Phrase Chunks:
+my companion
+an enigmatical smile
+
+**********************************************************************
+Sentence: 6. Holmes chuckled to himself.
+                 S                 
+   ______________|___               
+  |                  VP            
+  |        __________|___           
+  |       |              PP        
+  |       |           ___|_____     
+  NP      |          |         NP  
+  |       |          |         |    
+  N       V          P         N   
+  |       |          |         |    
+holmes chuckled      to     himself
+
+Noun Phrase Chunks:
+holmes
+himself
+
+**********************************************************************
+Sentence: 7. She never said a word until we were at the door here.
+                                  S                                     
+            ______________________|_____________                         
+           |                      |             S                       
+           |                      |     ________|_______                 
+           S                      |    |                VP              
+  _________|____                  |    |             ___|____________    
+ |              VP                |    |            VP               |  
+ |     _________|___              |    |    ________|___             |   
+ |    |             VP            |    |   |            PP           |  
+ |    |     ________|___          |    |   |     _______|___         |   
+ NP   |    |            NP        |    NP  |    |           NP       |  
+ |    |    |         ___|___      |    |   |    |        ___|___     |   
+ N   Adv   V       Det      N    Conj  N   V    P      Det      N   Adv 
+ |    |    |        |       |     |    |   |    |       |       |    |   
+she never said      a      word until  we were  at     the     door here
+
+Noun Phrase Chunks:
+she
+a word
+we
+the door
+
+**********************************************************************
+Sentence: 8. Holmes sat down and lit his pipe.
+                     S                   
+         ____________|________            
+        S            |        |          
+   _____|___         |        |           
+  |         VP       |        S          
+  |      ___|___     |     ___|___        
+  NP    VP      |    |    VP      NP     
+  |     |       |    |    |    ___|___    
+  N     V      Adv  Conj  V  Det      N  
+  |     |       |    |    |   |       |   
+holmes sat     down and  lit his     pipe
+
+Noun Phrase Chunks:
+holmes
+his pipe
+
+**********************************************************************
+Sentence: 9. I had a country walk on Thursday and came home in a dreadful mess.
+                                    S                                             
+      ______________________________|_____________________                         
+     S                                     |              S                       
+  ___|_________                            |     _________|___                     
+ |             VP                          |    |             NP                  
+ |    _________|_____                      |    |     ________|___                 
+ |   |               NP                    |    |    |            PP              
+ |   |          _____|________             |    |    |     _______|_____           
+ |   |         NP             PP           |    |    |    |             NP        
+ |   |    _____|_____      ___|_____       |    |    |    |    _________|______    
+ NP  |   |     AP    |    |         NP     |    VP   NP   |   |         AP     |  
+ |   |   |     |     |    |         |      |    |    |    |   |         |      |   
+ N   V  Det   Adj    N    P         N     Conj  V    N    P  Det       Adj     N  
+ |   |   |     |     |    |         |      |    |    |    |   |         |      |   
+ i  had  a  country walk  on     thursday and  came home  in  a      dreadful mess
+
+Noun Phrase Chunks:
+i
+a country walk
+thursday
+home
+a dreadful mess
+
+**********************************************************************
+Sentence: 10. I had a little moist red paint in the palm of my hand.
+              S                                                         
+  ____________|____________________                                      
+ |                                 VP                                   
+ |    _____________________________|____                                 
+ |   |                                  NP                              
+ |   |                         _________|____________________            
+ |   |                        NP                             |          
+ |   |                ________|_____________                 |           
+ |   |               NP                     |                |          
+ |   |    ___________|_____________         |                |           
+ |   |   |           AP            |        |                |          
+ |   |   |     ______|____         |        |                |           
+ |   |   |    |           AP       |        PP               PP         
+ |   |   |    |       ____|___     |     ___|___          ___|___        
+ NP  |   |    |      |        AP   |    |       NP       |       NP     
+ |   |   |    |      |        |    |    |    ___|___     |    ___|___    
+ N   V  Det  Adj    Adj      Adj   N    P  Det      N    P  Det      N  
+ |   |   |    |      |        |    |    |   |       |    |   |       |   
+ i  had  a  little moist     red paint  in the     palm  of  my     hand
+
+Noun Phrase Chunks:
+i
+a little moist red paint
+the palm
+my hand
+              S                                                         
+  ____________|____________________                                      
+ |                                 VP                                   
+ |    _____________________________|____                                 
+ |   |                                  NP                              
+ |   |                __________________|___________                     
+ |   |               NP                             PP                  
+ |   |    ___________|_____________      ___________|____                
+ |   |   |           AP            |    |                NP             
+ |   |   |     ______|____         |    |        ________|___            
+ |   |   |    |           AP       |    |       |            PP         
+ |   |   |    |       ____|___     |    |       |         ___|___        
+ NP  |   |    |      |        AP   |    |       NP       |       NP     
+ |   |   |    |      |        |    |    |    ___|___     |    ___|___    
+ N   V  Det  Adj    Adj      Adj   N    P  Det      N    P  Det      N  
+ |   |   |    |      |        |    |    |   |       |    |   |       |   
+ i  had  a  little moist     red paint  in the     palm  of  my     hand
+
+Noun Phrase Chunks:
+i
+a little moist red paint
+the palm
+my hand
+</code></pre>
+</div>
+</div>
+</section>
+<section id="further-analysis-and-inference" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Further analysis and inference</h1>
+<ol type="1">
+<li>From the testing results, we have seen that the compact CFG rules we defined avoid under-generation and generalize across all the given sentences. Now, let’s test whether these rules restrict the parser from over-generating sentences, i.e., generating sentences that are not syntactically valid. For example, let’s turn this syntactically valid sentence, ‘Holmes sat on the armchair,’ into a non-syntactic one, ‘Armchair on the sat Holmes’, and test whether the parser rejects it.”</li>
+</ol>
+<div class="cell" data-execution_count="9">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing whether parser rejects a non-syntactic sentence</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>main(<span class="st">'Armchair on the sat Holmes'</span>)</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Could not parse the sentence.</code></pre>
+</div>
+</div>
+<ol start="2" type="1">
+<li>The parser may have succesfully rejected a non-syntactic sentence, but it’s important to note that the parser may allow parsing meaningless sentences. This is because a sentence may be syntactically valid even if it lacks meaning. The parser only checks for syntactic rules, not the semantics of the sentence. Let’s form a meaningless but syntactically valid sentence using the words in terminal symbols, for example, ‘His Thursday chuckled in a paint’, and test it with the parser.</li>
+</ol>
+<div class="cell" data-execution_count="10">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing parsing of a meaningless but syntactically valid sentence</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>main(<span class="st">'His Thursday chuckled in a paint'</span>)</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sentence: His Thursday chuckled in a paint
+                    S                          
+      ______________|__________                 
+     |                         VP              
+     |               __________|___             
+     |              |              PP          
+     |              |       _______|___         
+     NP             |      |           NP      
+  ___|_____         |      |        ___|____    
+Det        N        V      P      Det       N  
+ |         |        |      |       |        |   
+his     thursday chuckled  in      a      paint
+
+Noun Phrase Chunks:
+his thursday
+a paint
+</code></pre>
+</div>
+</div>
+<ol start="3" type="1">
+<li><p>Furthermore, we have observed that the parser may generate multiple ways to parse a sentence because English grammar is inherently ambiguous. This can be seen with sentence 10 in the testing section above.</p></li>
+<li><p>Lastly, it’s worth mentioning that context-free grammar allows us to understand the structure of natural language, but it relies on writing all these rules. This is a major drawback because language is complex, and as a result, there will be some very complex rules. It would require a significant effort to write rules for every possible sentence that someone might write or say in the language.</p></li>
+</ol>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../projects/SQLMuseum/mfa.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">2. Soft deletions, views, and triggers in the context of a museum’s database</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../projects/MNIST/mnist.html" class="pagination-link">
+        <span class="nav-page-text">1. Nearest neighbor classifier for handwritten digit recognition</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

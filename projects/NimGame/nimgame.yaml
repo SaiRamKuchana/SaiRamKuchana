@@ -1,0 +1,4 @@
+- title: Training an AI to play a game using reinforcement learning
+  path: projects/NimGame/NimGame.qmd
+  image: projects/NimGame/optimizednim.gif
+  categories: [PYTHON]

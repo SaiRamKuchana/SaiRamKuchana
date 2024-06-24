@@ -1,0 +1,268 @@
+---
+title: 1. Generating parse trees and extracting noun phrases
+
+---
+In Natural Language Processing (NLP), parsing refers to the process of analyzing a sentence to identify its grammatical structure. This is useful for a number of reasons, such as understanding sentence structure, resolving ambiguities in sentences, and better extraction of information from sentences.
+
+
+In this project, 
+we will work with the following English sentences and apply the context-free grammar (CFG) formalism to generate a parse tree or syntactic tree that represents the syntactic structure of the given sentences. 
+Then, we will extract noun phrases from those sentences.
+
+Sentences to analyze:
+
+1. Holmes sat.
+2. Holmes lit a pipe.
+3. We arrived the day before Thursday.
+4. Holmes sat in the red armchair and he chuckled.
+5. My companion smiled an enigmatical smile. 
+6. Holmes chuckled to himself.
+7. She never said a word until we were at the door here.
+8. Holmes sat down and lit his pipe.
+9. I had a country walk on Thursday and came home in a dreadful mess.
+10. I had a little moist red paint in the palm of my hand.
+
+
+# Context-free grammar (CFG)
+
+Context-free grammar (CFG) is a type of formal grammar used to define the syntax rules of languages, particularly programming languages and natural languages. CFG consists of a set of rules, i.e., rewriting/production rules, that describe how sentences must be generated. These rules are used to construct parse trees that represent the syntactic structure of sentences.
+
+The objective of CFG is to start with a nonterminal symbol S (representing a sentence) and repeatedly apply rewriting rules until a complete sentence of terminal symbols (i.e., words) is generated. For example, a simple rule like S → N V indicates that the S symbol can be rewritten as N V (a noun followed by a verb). 
+If we also have the rule N → "Holmes" and the rule V → "sat", we can generate the complete sentence "Holmes sat." 
+However, it's important to note that this simple rule can only generate sentences that have a noun followed by a verb. 
+Therefore, for this project, we must define rules in such a way that they capture all the complexity of the given sentences above and generalize across them without over-generating or under-generating.
+
+
+
+
+## CFG rules
+
+A rewriting rule in a CFG has the following form:
+
+𝐴 → 𝛼
+
+Where:
+* 𝐴 is a non-terminal symbol and
+* 𝛼 is a string consisting of terminal and/or non-terminal symbols.
+
+
+Now, let's define a concrete set of rules for generating terminal symbols and non-terminal symbols.
+
+
+### Terminal symbols
+
+Terminal symbols represent the words in the sentence. The rules for generating these terminal symbols are defined in the global variable `TERMINALS`, which includes all the words of the given sentences to analyze. Notice that `Adj` is a nonterminal symbol that generates adjectives, `Adv` generates adverbs, `Conj` generates conjunctions, `Det` generates determiners, `N` generates nouns (spread across multiple lines for readability), `P` generates prepositions, and `V` generates verbs. The vertical bar `|` denotes all the terminal symbol alternatives for that particular non-terminal symbol.
+
+
+```{python}
+TERMINALS = """
+Adj -> "country" | "dreadful" | "enigmatical" | "little" | "moist" | "red"
+Adv -> "down" | "here" | "never"
+Conj -> "and" | "until"
+Det -> "a" | "an" | "his" | "my" | "the"
+N -> "armchair" | "companion" | "day" | "door" | "hand" | "he" | "himself"
+N -> "holmes" | "home" | "i" | "mess" | "paint" | "palm" | "pipe" | "she"
+N -> "smile" | "thursday" | "walk" | "we" | "word" 
+P -> "at" | "before" | "in" | "of" | "on" | "to" 
+V -> "arrived" | "came" | "chuckled" | "had" | "lit" | "said" | "sat"
+V -> "smiled" | "tell" | "were" 
+"""
+```
+
+### Non-terminal symbols
+
+Non-terminal symbols are syntactic variables that represent sets of strings. 
+Common non-terminals include parts of speech (e.g., noun, verb) and phrases (e.g., noun phrase, verb phrase). 
+These symbols are defined in the global variable called `NONTERMINALS` and it contains all the rules for generating non-terminal symbols. 
+
+The description of symbols is as follows: `S` represents a complete sentence, `NP` represents a noun phrase, `VP` represents a verb phrase, `PP` represents a prepositional phrase, `Det` represents a determiner, and `AP` represents an adjective phrase. Each alternative separated by the vertical bar `|` represents a different way that a non-terminal can be replaced by a sequence of terminals and/or non-terminals. We can notice that all these rules are self-explanatory. For example, a rule like AP → Adj | Adj AP indicates that an adjective phrase can be formed either by an adjective or by an adjective followed by an adjective phrase.
+
+
+
+```{python}
+NONTERMINALS = """
+S -> NP VP | VP NP | S Conj S
+
+NP -> N | Det N | NP PP | Det AP N
+VP -> V | V NP | V PP | Adv VP | VP Adv
+AP -> Adj | Adj AP
+PP -> P NP
+"""
+```
+
+# Generating parse trees and extracting noun phrases
+
+Now that we have defined grammar rules for generating sentences,
+let's use NLTK module to parse that context-free grammar.
+
+
+```{python}
+# Import the required modules
+
+import sys
+import nltk
+
+# Create grammar from pre-defined symbols and parse it
+
+grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
+parser = nltk.ChartParser(grammar)
+```
+
+Next, we will define a `main` function that accepts a sentence as input and prints out the parse trees and noun phrases of that sentence. The input sentence is preprocessed using the `preprocess` function and then parsed according to the context-free grammar rules we defined above. After that, the noun phrases are extracted from the sentence using the `np_chunk` function.
+
+
+
+```{python}
+def main(sentence):
+    
+    """ Main Function
+    Takes argument from command line, 
+    Parse the sentence and recognize the structure
+    Print out the structure and np_chunks
+    """
+
+    # Convert input into list of words
+    tokenized_sentence = preprocess(sentence)
+
+    # Attempt to parse sentence
+    try:
+        trees = list(parser.parse(tokenized_sentence))
+    except ValueError as error:
+        print(error)
+        return
+    if not trees:
+        print("Could not parse the sentence.")
+        return
+
+    
+    print(f"Sentence: {sentence}")
+    
+    # Print each tree with noun phrase chunks
+    for tree in trees:
+        tree.pretty_print()
+
+        print("Noun Phrase Chunks:")
+        for np_c in np_chunk(tree):
+            print(" ".join(np_c.flatten()))
+            
+    print()
+    
+```
+
+The `preprocess` function takes a sentence as input and returns a lowercased list of its words. Any word that doesn’t contain at least one alphabetic character (e.g., 3 or .) is excluded from the returned list. This function uses NLTK’s `word_tokenize` function to perform tokenization.
+
+
+
+```{python}
+def preprocess(sentence):
+    """
+    Convert `sentence` into a list of its words.
+    
+    Pre-process sentence by converting all characters to lowercase
+    and removing any word that does not contain at least one alphabetic
+    character.
+    """
+    # Lowercase the sentence
+    sentence = sentence.lower()
+
+    # Tokenize each element in the sentence
+    word_list = nltk.word_tokenize(sentence)
+
+    # Remove all words that does not contain at least one alphabetic char
+    for word in word_list:
+        if not any(char.isalpha() for char in word):
+            word_list.remove(word)
+
+    return word_list
+```
+
+The `np_chunk` function accepts an `nltk.tree` object with the label S, representing the syntax of a sentence as input, and returns a list of all the noun phrase chunks in that sentence.  A noun phrase chunk is a subtree of the original tree with the label `NP` and does not itself contain other noun phrases as subtrees. For example, if "the home" is a noun phrase chunk, then "the armchair in the home" is not a noun phrase chunk because the latter contains the former as a subtree.
+
+
+
+```{python}
+def np_chunk(tree):
+    """
+    Return a list of all noun phrase chunks in the sentence tree.
+    
+    A noun phrase chunk is defined as any subtree of the sentence
+    whose label is "NP" that does not itself contain any other
+    noun phrases as subtrees.
+    """
+    np_chunks = []
+
+    # For each subtree, check if its label is "NP" and no child is "NP"
+    for subtree in tree.subtrees():
+        if subtree.label() == "NP" and not any(child.label() == "NP" for child in subtree):
+            np_chunks.append(subtree)
+
+    return np_chunks
+```
+
+# Testing the parser
+
+Now that we have our model, let's test it with all of the given sentences. 
+
+
+
+```{python}
+# Make tuple of given sentences
+
+sentence_corpus = (
+    "1. Holmes sat.",
+    "2. Holmes lit a pipe.",
+    "3. We arrived the day before Thursday.",
+    "4. Holmes sat in the red armchair and he chuckled.",
+    "5. My companion smiled an enigmatical smile.",
+    "6. Holmes chuckled to himself.",
+    "7. She never said a word until we were at the door here.",
+    "8. Holmes sat down and lit his pipe.",
+    "9. I had a country walk on Thursday and came home in a dreadful mess.",
+    "10. I had a little moist red paint in the palm of my hand.",    
+)
+```
+
+
+```{python}
+# call the `main` function on each sentence
+
+for i, sentence in enumerate(sentence_corpus):
+    main(sentence)
+    
+    # Seperate the sentences with '*'
+    if i+1 < len(sentence_corpus):
+        print("*" * 70)
+```
+
+# Further analysis and inference
+
+1. From the testing results, we have seen that the compact CFG rules we defined avoid under-generation and generalize across all the given sentences. Now, let's test whether these rules restrict the parser from over-generating sentences, i.e., generating sentences that are not syntactically valid. For example, let's turn this syntactically valid sentence, 'Holmes sat on the armchair,' into a non-syntactic one, 'Armchair on the sat Holmes', and test whether the parser rejects it."
+
+
+
+
+```{python}
+# Testing whether parser rejects a non-syntactic sentence
+
+main('Armchair on the sat Holmes')
+```
+
+2. The parser may have succesfully rejected a non-syntactic sentence, but it's important to note that the parser may allow parsing meaningless sentences. This is because a sentence may be syntactically valid even if it lacks meaning. The parser only checks for syntactic rules, not the semantics of the sentence. Let's form a meaningless but syntactically valid sentence using the words in terminal symbols, for example, 'His Thursday chuckled in a paint', and test it with the parser.
+
+
+
+
+```{python}
+# Testing parsing of a meaningless but syntactically valid sentence
+
+main('His Thursday chuckled in a paint')
+```
+
+3. Furthermore, we have observed that the parser may generate multiple ways to parse a sentence because English grammar is inherently ambiguous. This can be seen with sentence 10 in the testing section above.
+
+
+
+
+
+4. Lastly, it's worth mentioning that context-free grammar allows us to understand the structure of natural language, but it relies on writing all these rules. This is a major drawback because language is complex, and as a result, there will be some very complex rules. It would require a significant effort to write rules for every possible sentence that someone might write or say in the language.
+

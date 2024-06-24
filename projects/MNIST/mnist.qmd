@@ -1,0 +1,391 @@
+---
+title: 1. Nearest neighbor classifier for handwritten digit recognition
+jupyter: python3
+---
+
+<br>
+In this project, we will build a classifier that takes an image of a handwritten digit and recognizes the digit present in the image. Specifically, we will look at a simple strategy for this problem known as the **nearest neighbor(NN) classifier**.
+
+
+# The MNIST dataset
+
+
+We will use the `MNIST` dataset, which is a classic dataset in machine learning, to train our nearest neighbor classifier. It consists of 28x28 grayscale images of handwritten digits, along with corresponding labels (0 through 9) indicating the digit each image represents.
+The original MNIST training set contains 60,000 images, and the test set contains 10,000 images. However, in this project, we will work with a subset of this data, prepared beforehand for easy computational purposes. Here is the dataset we will use:
+
+* A training set comprising 7,500 images, and
+* A test set consisting of 1,000 images.
+
+
+If x is the vector representing an image and y is the corresponding label, then:
+
+* Data space: $x \in \mathbb{R}^{784}$, a 784-dimensional vector consisting of numeric values ranging from 0 to 255.
+* Label space: $y = \{0.....9\}$, representing the label of the image.
+
+    
+
+
+
+
+# Load in the modules and the dataset
+
+
+```{python}
+%matplotlib inline
+import numpy as np  #to load and manipulate data and to build NN classifier
+import matplotlib.pyplot as plt # to visualize datapoints
+import time # to compute classification time
+from sklearn.neighbors import KDTree # to build k-d tree algorithm
+
+
+## Load in the training set
+
+train_data = np.load('train_data.npy')
+train_labels = np.load('train_labels.npy')
+
+## Load in the testing set
+
+test_data = np.load('test_data.npy')
+test_labels = np.load('test_labels.npy')
+```
+
+## Dimensions of the training and the test set 
+
+
+```{python}
+## Print out their dimensions
+
+print("Training dataset dimensions: ", np.shape(train_data))
+print("Number of training labels: ", len(train_labels), end='\n\n')
+
+print("Testing dataset dimensions: ", np.shape(test_data))
+print("Number of testing labels: ", len(test_labels))
+```
+
+
+Each data point, i.e., a handwritten digit image in the dataset, 
+is composed of 784 pixels and is stored as a vector with 784 coordinates/dimensions, 
+where each coordinate has a numeric value ranging from 0 to 255.
+
+Let us look at these numeric values by examining one of the images, say, the first image, in the dataset.
+
+
+```{python}
+# print out the the first data point in training data
+
+train_data[0] 
+```
+
+## Compute the number of images of each digit in the dataset
+
+
+```{python}
+## Compute the number of images of each digit in the training ans test dataset
+
+
+train_digits, train_counts = np.unique(train_labels, return_counts=True)
+print("Training set distribution:")
+print(dict(zip(train_digits, train_counts)), end='\n\n')
+
+test_digits, test_counts = np.unique(test_labels, return_counts=True)
+print("Test set distribution:")
+print(dict(zip(test_digits, test_counts)))
+      
+      
+```
+
+
+So in the training set, we have 750 images of digits 0-9 each, totaling 7500 images. In the test set, we have 100 images of digits 0-9 each, with a total of 1000 images.
+
+# Visualize the data
+
+To visualize a data point, 
+we need to first reshape the 784-dimensional vector into a 28x28 image.
+For that purpose, we will define a function, `vis_image()`, which in turn uses the `show_digit()` function 
+to display the image of the digit given as input.
+
+
+
+
+```{python}
+## Define a function that displays a digit given its vector representation
+
+
+def show_digit(x):
+    
+    plt.axis('off')
+    plt.imshow(x.reshape((28,28)), cmap=plt.cm.gray)
+    plt.show()
+
+
+## Define a function that takes an index of particular data set ("train" or "test") and displays that image.
+
+def vis_image(index, dataset="train"):
+    
+    if(dataset=="train"): 
+        show_digit(train_data[index])
+        label = train_labels[index]
+    else:
+        show_digit(test_data[index])
+        label = test_labels[index]
+    print("\t\t    Label " + str(label))
+
+
+```
+
+## View the first data point in the training set and test set
+
+
+Now that we have defined a function for visualizing the image, 
+let's see it in action by applying it to the first data points of the dataset.
+
+
+```{python}
+## View the first data point in the training set
+
+vis_image(0, "train")
+
+```
+
+
+```{python}
+## Now view the first data point in the test set
+
+vis_image(0, "test")
+```
+
+# Compute squared Euclidean distance
+
+
+To compute nearest neighbor in our dataset, we first need to be able to compute distances between data points 
+(i.e., images in this case), and the most common or default distance function is perhaps just Euclidean distance.
+
+Since we have 784-dimensional vectors to work with, the Euclidean distance between two 784-dimensional vectors, 
+say $x, z \in \mathbb{R}^{784}$, is:
+
+$$\|x - z\| = \sqrt{\sum_{i=1}^{784} (x_i - z_i)^2}$$
+
+where $x_i$ and $z_i$ represent the $i^{th}$ coordinates of x and z, respectively.
+
+
+
+For easier computation, we often omit the square root and simply compute _squared Euclidean distance_:
+
+$$\|x - z\|^2 = \sum_{i=1}^{784} (x_i - z_i)^2$$
+
+
+The following `squared_dist` function computes the squared Euclidean distance between two vectors.
+
+
+```{python}
+## Computes squared Euclidean distance between two vectors.
+
+def squared_dist(x,z):
+    return np.sum(np.square(x-z))
+
+
+```
+
+## Examples of computing squared Euclidean distance
+
+
+```{python}
+
+print('Examples:\n')
+
+## Computing distances between digits in our training set.
+
+print(f"Distance from digit {train_labels[4]} to digit {train_labels[5]} in our training set: {squared_dist(train_data[4],train_data[5])}")
+
+print(f"Distance from digit {train_labels[4]} to digit {train_labels[1]} in our training set: {squared_dist(train_data[4],train_data[1])}")
+
+print(f"Distance from digit {train_labels[4]} to digit {train_labels[7]} in our training set: {squared_dist(train_data[4],train_data[7])}")
+```
+
+# Build nearest neighbor classifier
+
+Now that we have a distance function defined, we can turn to nearest neighbor classification.
+
+In a nearest neighbor classification approach, for each test image in the test dataset, the classifier searches through the entire training set to find the nearest neighbor. This is done by computing the squared Euclidean distance between the feature vectors (in this case, the pixel values of the images) of the test image and all images in the training set. The image in the training set with the smallest Euclidean distance becomes the nearest neighbor to the test image, and the label of this nearest neighbor is assigned to the test image. This process is repeated for each test image, resulting in a classification for the entire test dataset based on the labels of their nearest neighbors in the training set.
+
+
+we define the functions `find_NN()` and `NN_classifier()` 
+to find the nearest neighbour image for a given image `x`, 
+i.e., the image that has least squared Euclidean distance, and then returns its label. 
+The returned label is what the given image `x` could represent.
+
+
+
+```{python}
+## Takes a vector x and returns the index of its nearest neighbor in train_data
+
+def find_NN(x):
+    
+    # Compute distances from x to every row in train_data
+    
+    distances = [squared_dist(x, train_data[i]) for i in range(len(train_labels))]
+    
+    # Get the index of the smallest distance
+    return np.argmin(distances)
+
+
+## Takes a vector x and returns the class of its nearest neighbor in train_data
+
+def NN_classifier(x):
+    
+    # Get the index of the the nearest neighbor
+    
+    index = find_NN(x)
+    
+    # Return its class
+    return train_labels[index]
+
+```
+
+# Performance of the nearest neighbor classifier
+
+Now, let's apply our nearest neighbor classifier to the full test dataset.<br>
+
+
+
+
+```{python}
+## Predict on each test data point and time it!
+
+t_before = time.time()
+test_predictions = [NN_classifier(test_data[i]) for i in range(len(test_labels))]
+t_after = time.time()
+
+```
+
+## Compute the classification time of NN
+
+Since the nearest neighbor classifier goes through the entire training set of 7500 images, searching for the nearest neighbor image for every single test image in the dataset of 1000 images, we should not expect testing to be very fast.
+
+
+
+
+
+
+```{python}
+## Compute the classification time of NN classifier
+
+print(f"Classification time of NN classifier: {round(t_after - t_before, 2)} sec")
+
+```
+
+## Compute the error rate of NN
+
+
+```{python}
+## Compute the error rate 
+
+err_positions = np.not_equal(test_predictions, test_labels)
+error = float(np.sum(err_positions))/len(test_labels)
+
+print(f"Error rate of nearest neighbor classifier: {error * 100}%")
+
+```
+
+The error rate of the NN classifier is **4.6%**. 
+This means that out of the 1000 points, NN misclassifies 46 of them. 
+That's not too bad for such a simple method.
+
+# Improve nearest neighbors
+
+NN classifier can be improved in two aspects:
+
+* Decreasing the error rate
+* Decreasing the classification time
+
+
+        Decreasing the error rate
+
+The error rate can be decreased in two ways: 
+by using k-Nearest Neighbors and by employing better distance functions.
+
+(i) k-Nearest neighbors
+          
+
+Instead of finding 1 nearest neighbor and returning its label, as we have done in this project, 
+we can find k nearest neighbors and return the majority label, 
+where the optimum value for k is found by cross-validation technique.
+
+
+(ii) Better distance functions
+
+Euclidean distance is affected by image deformation. Using better distance functions, such as shape context and tangent distance, which are invariant to deformations, could drastically reduce the error rate.
+
+
+        Decreasing the classification time
+
+
+In this project, we will focus on decreasing the classification time.
+We have seen that the brute-force search technique for the nearest neighbor is quite effective, 
+but this method can be computationally expensive, especially with large datasets.
+If there are $N$ training points in $\mathbb{R}^d$, this approach scales as $O(N d)$ time. 
+That means the brute-force approach quickly becomes infeasible as the number of training points $N$ grows.
+
+Fortunately, faster methods exist to perform nearest neighbor searches 
+if we are willing to spend some time preprocessing the training set 
+to create data structures that will optimize the search.
+These data structures have names like locality sensitive hashing, ball trees, k-d trees etc.
+
+Here, we look at one of these algorithms, namely, k-d tree and implement it using scikit-learn library.
+
+
+
+
+
+
+
+
+## k-d tree algorithm
+
+The key advantage of the k-d tree is its ability to significantly reduce the number of distance calculations needed during a nearest neighbor search by efficiently pruning regions of the search space. 
+This algorithm is based on the triangle inequality, utilizing the fact that if point 'a' is significantly far from point 'b,' and point 'b' is in close proximity to point 'c,' we can infer that points 'a' and 'c' are also distant from each other without explicitly calculating their distance.
+
+This way, the computational cost of a nearest neighbors search can be reduced to $O(dNlog(N))$ or better.
+
+
+```{python}
+## Build nearest neighbor structure on training data
+
+t_before = time.time()
+kd_tree = KDTree(train_data)
+t_after = time.time()
+
+## Compute training time
+t_training = t_after - t_before
+print(f"Time to build data structure: {round(t_training, 2)} sec")
+
+## Get nearest neighbor predictions on testing data
+t_before = time.time()
+test_neighbors = np.squeeze(kd_tree.query(test_data, k=1, return_distance=False))
+kd_tree_predictions = train_labels[test_neighbors]
+t_after = time.time()
+
+## Compute testing time
+t_testing = t_after - t_before
+print(f"Time to classify test set: {round(t_testing, 2)} sec", end = '\n\n')
+
+## total classification time
+
+print(f"Overall classification time of k-d tree algorithm: {round(t_training+t_testing, 2)} sec")
+
+
+## Verify that the predictions are the same
+print("Does k-d tree produce same predictions as NN classifier? ", np.array_equal(test_predictions, kd_tree_predictions))
+```
+
+We can see that the baseline nearest neighbor model and the k-d tree algorithm produce the same predictions, 
+but the key difference is that the k-d tree is significantly faster than the former.
+
+
+# Conclusion
+
+We have found that our nearest neighbor (NN) classifier has delivered reasonably good performance, 
+despite employing a brute-force search approach and using a basic distance measure such as Euclidean distance.
+
+We have also seen how the k-d tree algorithm can be used to speed up the search process, thereby making it feasible for the nearest neighbor classifier to be applied to larger datasets.
+

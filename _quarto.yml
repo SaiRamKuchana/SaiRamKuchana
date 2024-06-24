@@ -1,0 +1,120 @@
+project:
+  type: website
+  output-dir: docs
+
+jupyter: python3
+
+#execute:
+#  freeze: auto
+
+website:
+
+  page-navigation: true
+  repo-url: https://github.com
+  
+  reader-mode: false
+  back-to-top-navigation: true
+
+  navbar:
+    title: 'Home'
+  
+    background: dark
+#    foreground: secondary
+    search: false
+
+    tools:
+      - icon: linkedin
+        text: Linkedin
+        href: https://www.linkedin.com/in/ram-kuchana/
+#      - icon: github
+#        text: GitHub
+#        href: https://github.com
+      - icon: envelope
+        text: Email
+        href: mailto:rams9795@gmail.com
+        
+
+    left:
+#      - text: "Projects' overview"
+#        file: projects/MNIST/omnist.qmd
+   
+      - text: "Projects"
+        file: projects/SQLMuseum/mfa.qmd
+
+
+        
+        
+
+  sidebar:
+
+    
+#    - title: "Projects' overview"
+    
+#      style: "floating"
+#      alignment: left
+#      border: true
+#    background: light
+#      search: false
+      
+#      contents:
+#        - section: "Overview of the projects"
+#          contents:
+#            - projects/MNIST/omnist.qmd
+ 
+            
+
+    - title: "Projects"
+    
+      style: "floating"
+      alignment: left
+      border: true
+#    background: light
+      search: false
+      
+    
+      contents:
+        - section: "SQL Projects"
+          contents:
+            - projects/SQLPackages/packages.qmd
+            - projects/SQLMuseum/mfa.qmd
+            
+        - section: "NLP Projects"
+          contents:
+            - projects/ParseTrees/ParsetreesNnounphrases.qmd       
+    
+        - section: "ML Projects"
+          contents:
+            - projects/MNIST/mnist.qmd
+            - projects/NimGame/NimGame.qmd
+
+format:
+  html:
+    theme: 
+      - cosmo
+      - styles.scss
+    fontsize: 16px
+#    monofont: Source Sans Pro, sans-serif
+
+  
+
+    
+    toc: true
+    toc-title: Table of contents
+    
+    smooth-scroll: true
+    anchor-sections: true
+    number-sections: true
+    page-layout: article
+    
+    code-copy: false
+    code-fold: show
+    code-overflow: wrap
+
+      
+    
+    
+    
+    
+
+
+

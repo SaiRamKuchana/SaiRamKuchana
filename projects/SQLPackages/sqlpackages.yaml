@@ -1,0 +1,4 @@
+- title: Using SQL to find the missing packages in the mail delivery service’s database
+  path: projects/SQLPackages/packages.qmd
+  image: projects/SQLPackages/ERpackages.png
+  categories: [SQL]

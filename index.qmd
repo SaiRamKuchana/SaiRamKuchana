@@ -1,0 +1,61 @@
+---
+title: Sai Ram Kuchana
+jupyter: python3
+image: pictures/profilepic.JPG
+
+format:
+  html:
+    toc: false
+    number-sections: false
+    back-to-top-navigation: false
+
+about:
+  template: trestles
+  
+  image-shape: round
+
+  image-width: 15em
+  
+  links:
+    - icon: linkedin
+      text: Linkedin
+      href: https://www.linkedin.com/in/ram-kuchana/
+#    - icon: github
+#      text: GitHub
+#      href: https://github.com      
+    - icon: envelope
+      text: Email
+      href: mailto:rams9795@gmail.com
+    # (additional links excluded for brevity)
+  
+  id: ppc
+    
+sidebar: false
+
+listing:
+  
+  - id: overview
+    type: grid
+#    categories: unnumbered
+    contents: 
+#      - projects/MNIST/MNIST.qmd
+      - projects/NimGame/nimgame.yaml
+      - projects/ParseTrees/parsetrees.yaml
+      - projects/SQLPackages/sqlpackages.yaml
+      - projects/SQLMuseum/sqlmfa.yaml
+      - projects/MNIST/mnist.yaml
+      
+    fields: [title, image, categories]
+    sort: false
+---
+
+::: {#ppc}
+Hi, I'm Ram!
+
+I have newly developed passion for Data Science and Coding. Here, I post my projects whenever i have done something new and got time.
+:::
+
+## Projects
+
+::: {#overview}
+:::

@@ -1,0 +1,99 @@
+---
+title: Nearest neighbor classifier for handwritten digit recognition
+jupyter: python3
+---
+
+<br>
+In this project we will build a classifier that takes an image of a handwritten digit 
+and recognizes the digit present in the image. Specifically, we will look at a simple strategy for this problem known as the **nearest neighbor(NN) classifier**.
+
+[Please click here for the detailed project.](https://ramkuchana.github.io/Ramkuchana/projects/MNIST/mnist.html)
+
+# The MNIST dataset
+
+
+We will use the `MNIST` dataset to train our nearest neighbor classifier. 
+It consists of 28x28 grayscale images of handwritten digits, 
+along with corresponding labels (0 through 9) indicating the digit each image represents.
+Here, we will work only with a subset of the original dataset, 
+namely, a training set comprising 7,500 images and a test set consisting of 1,000 images.
+
+
+If x is the vector representing an image and y is the corresponding label, then:
+
+* Data space: $x \in \mathbb{R}^{784}$, a 784-dimensional vector consisting of numeric values ranging from 0 to 255.
+* Label space: $y = \{0.....9\}$, representing the label of the image.
+
+    
+
+
+
+
+# Nearest neighbor(NN) classifier
+
+
+To compute nearest neighbor in our dataset, we first need to be able to compute distances between data points 
+(i.e., images in this case), and the most common or default distance function is perhaps just Euclidean distance.
+we often omit the square root, and simply compute _squared Euclidean distance_ for easy computation.
+
+Since we have 784-dimensional vectors to work with, 
+the squared Euclidean distance between two 784-dimensional vectors, say $x, z \in \mathbb{R}^{784}$, is:
+
+$$\|x - z\|^2 = \sum_{i=1}^{784} (x_i - z_i)^2$$
+
+where $x_i$ and $z_i$ represent the $i^{th}$ coordinates of x and z, respectively.
+
+The way the nearest neighbour works is that for each test image in the test dataset, the classifier searches through the entire training set to find the nearest neighbor.
+This is done by computing the squared Euclidean distance between the feature vectors (in this case, the pixel values of the images) of the test image and all images in the training set. 
+The image in the training set with the smallest Euclidean distance becomes the nearest neighbor to the test image, and the label of this nearest neighbor is assigned to the test image.
+This process is repeated for each test image, resulting in a classification for the entire test dataset based on the labels of their nearest neighbors in the training set.
+
+
+
+
+
+
+
+# Performance of the NN 
+
+After applying NN classifier to the entire test dataset, 
+we obtain an error rate of 4.6%.
+This means that out of the 1000 points,the NN classifier misclassifies 46 of them.
+
+We also observe that the time taken by the NN classifier to classify the entire test set is about 25-40 seconds.
+
+
+# Improving the NN classifier
+
+NN classifier can be improved in two aspects: decreasing the error rate
+and reducing the classification time. In this project, we will focus on reducing the classification time.
+
+We have seen that the brute-force search technique for the nearest neighbor is quite effective, 
+but this method can be computationally expensive, especially with large datasets.
+If there are $N$ training points in $\mathbb{R}^d$, this approach scales as $O(N d)$ time. 
+That means the brute-force approach quickly becomes infeasible as the number of training points $N$ grows.
+
+
+Fortunately, faster methods exist to perform nearest neighbor searches 
+if we are willing to spend some time preprocessing the training set 
+to create data structures that will optimize the search.
+Here, we look at one of these algorithms, namely, k-d tree.
+
+## k-d tree algorithm
+
+The key advantage of the k-d tree is its ability to significantly reduce the number of distance calculations needed during a nearest neighbor search by efficiently pruning regions of the search space. 
+This algorithm is based on the triangle inequality, utilizing the fact that if point 'a' is significantly far from point 'b,' and point 'b' is in close proximity to point 'c,' we can infer that points 'a' and 'c' are also distant from each other without explicitly calculating their distance.
+This way, the computational cost of a nearest neighbors search can be reduced to $O(dNlog(N))$ or better.
+
+After implementing k-d tree algorithm, 
+we get a classification time of about 5-6 seconds, which is drastically less than baseline NN classifier.
+
+# Conclusion
+
+We have found that our nearest neighbor (NN) classifier has delivered reasonably good performance, 
+despite employing a brute-force search approach and using a basic distance measure such as Euclidean distance.
+
+We have also seen how the k-d tree algorithm can be used to speed up the search process, thereby making it feasible for the nearest neighbor classifier to be applied to larger datasets.
+
+
+

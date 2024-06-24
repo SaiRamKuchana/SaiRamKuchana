@@ -1,0 +1,615 @@
+---
+title: 2. Training an AI to play a game using reinforcement learning
+
+---
+
+In this project, we will build an AI to learn the strategy for playing the game Nim through reinforcement learning.
+In particular, we will explore one of the models of reinforcement learning called Q-learning.
+But first, let's look at how the Nim game is played.
+
+
+
+
+# The Nim game
+
+
+The Nim game is a classic mathematical strategy game involving two players where players take turns to remove the objects from piles. The rule is that on each turn, a player must remove at least one object from only a single pile, but they can remove as many objects as they want from that pile. The goal of the game is to force the opponent to take the last object, thereby winning the game; in other words, whoever takes the last object loses.
+
+A demo of the gameplay between player 'A' and player 'B' is shown below in the GIF.
+
+![Nim gameplay](optimizednim.gif)
+
+# Q-learning
+
+Q-learning is all about learning a function Q(s, a) that estimates a reward value (a number) for taking action 'a' in state 's'. These estimates, also known as Q-values, are learned by the AI through playing the game against itself a sufficient number of times. Once training is complete, the AI will have gained the experience necessary to strategize effectively and potentially win the game. Now, let's examine this concept more concretely in the context of our Nim game.
+
+
+A "state" in the Nim game is the current number of objects in each of the four piles. For example, a state [1, 2, 1, 5] represents that there is 1 object in pile 0, 2 objects in pile 1, 1 object in pile 2, and 5 objects in pile 3.
+An "action" in the Nim game represents the act of removing object(s) from a chosen pile. An action (i, j) denotes the action of removing j objects from pile i. So if an action (3, 5) is applied to the state [1, 2, 1, 5], it would result in the new state [1, 2, 1, 0], where pile 3 now has no objects. Every time an action 'a' is performed on a state 's', i.e., an AI player has made their move, we update the Q-values, aka Q(s, a), according to the following equation:
+
+Q(s,a) ← old value estimate + α × (new value estimate−old value estimate)
+
+where:
+
+* The old value estimate is just the existing Q-value for that action 'a' in state 's', which can be found by calling the Q(s, a) function.
+
+
+* α (alpha) is the learning rate, representing how much we value new information compared to information we already have. Here, we set α = 0.5 to balance between old and new information.
+
+
+* The new value estimate is the sum of the current reward and the future reward estimate.
+
+    * The current reward is the reward received for the current action 'a' in state 's'. In our game, this reward is given as follows: an action that results in the continuation of the game has a reward of 0, an action that results in winning the game has a reward of +1, and a reward of -1 is assigned for an action that results in losing the game.
+
+    * The future reward estimate is the maximum Q-value among all the possible actions that can be taken in the new state. This new state is nothing but the state resulted after taking an action in the current state.
+  
+  
+Initially, the Q-values for all states 's' and actions 'a' will be zero, i.e., Q(s,a) = 0 for all s and a. During training, each time the AI takes an action (makes a move) in a state, these Q-values are updated according to the formula mentioned earlier. By the end of training, the AI will have optimized Q-values, enabling it to determine which actions are more advantageous in any given state.
+
+# Building the NimAI
+
+Now, let's take a look at the code featuring two classes, `Nim` and `NimAI`, along with two functions, `train` and `play`. Detailed explanations of these classes and functions are provided in their respective sections. Additionally, the code itself is filled with comments for further clarity.
+
+## Defining the Nim game
+
+The `Nim` class defines how a Nim game is played. An object of the `Nim` class is initialized to keep track of the piles, the current player, and the winner of the game. The `available_actions` method returns a set of all the available actions for a given state. The `move` method checks the validity of a player's move/action, updates the number of objects in the piles according to the move, switches the player's turn using the `switch_player` and `other_player` methods, and finally checks for a winner.
+
+
+
+
+
+```{python}
+#| eval: false
+# Import the required modules
+
+import math
+import random
+import time
+
+
+class Nim():
+    """ Class to define the Nim game itself """
+
+    def __init__(self):
+        """
+        Initialize game board.
+        Each game board has
+            - `piles`: a list of how many objects remain in each pile
+            - `player`: 0 or 1 to indicate which player's turn
+            - `winner`: None, 0, or 1 to indicate who the winner is
+        """
+        initial=[1, 3, 5, 7]
+        self.piles = initial.copy()
+        self.player = 0
+        self.winner = None
+
+    @classmethod
+    def available_actions(cls, piles):
+        """
+        Nim.available_actions(piles) takes a `piles` list aka `state` as input
+        and returns all of the available actions `(i, j)` in that state.
+
+        Action `(i, j)` represents the action of removing `j` items
+        from pile `i` (where piles are 0-indexed).
+        """
+        actions = set()
+        for i, pile in enumerate(piles):
+            for j in range(1, pile + 1):
+                actions.add((i, j))
+        return actions
+
+    @classmethod
+    def other_player(cls, player):
+        """
+        Nim.other_player(player) returns the player that is not
+        `player`. Assumes `player` is either 0 or 1.
+        """
+        return 0 if player == 1 else 1
+
+    def switch_player(self):
+        """
+        Switch the current player to the other player.
+        """
+        self.player = Nim.other_player(self.player)
+
+    def move(self, action):
+        """
+        Make the move aka `action` for the current player.
+        `action` must be a tuple `(i, j)`.
+        """
+        pile, count = action
+
+        # Check for the validity of the move
+        if self.winner is not None:
+            raise Exception("Game already won")
+        elif pile < 0 or pile >= len(self.piles):
+            raise Exception("Invalid pile")
+        elif count < 1 or count > self.piles[pile]:
+            raise Exception("Invalid number of objects")
+
+        # Update pile
+        self.piles[pile] -= count
+        
+        # Switch the player
+        self.switch_player()
+
+        # Check for a winner
+        if all(pile == 0 for pile in self.piles):
+            self.winner = self.player
+```
+
+## Defining the NimAI
+
+The `NimAI` class defines the AI where the Q-learning algorithm is implemented. An object of the `NimAI` class is initialized with an empty `q_value` dictionary, and default values of 0.5 and 0.1 for alpha and epsilon respectively. The `q_value` dictionary keeps track of all Q-values of (state, action) pairs learned by the AI. Alpha is used in the Q-learning formula, and epsilon is used for action selection.
+
+The `update` method updates the Q-value of an action in a state. It takes inputs: `old_state` (the state where the action is taken), `action` (the action taken in the old state), `reward` (the immediate reward for that action in that state), and `new_state` (the state resulting from taking that action). The method then implements Q-learning by retrieving the current Q-value using `get_q_value`, determining the best possible future rewards with `best_future_reward`, and updating the Q-value using `update_q_value`. 
+
+Lastly, the `choose_action` method selects an action for a given state based on an epsilon-greedy algorithm. The epsilon-greedy algorithm allows the AI to explore other actions in a state to maximize future rewards. With probability epsilon, the AI chooses a random action (explore), and with probability (1 - epsilon), it chooses the action with the highest Q-value (exploit). This balance between exploration and exploitation helps in improving the AI's performance over time.
+
+
+```{python}
+#| eval: false
+class NimAI():
+    """ Class to define the AI """
+    def __init__(self, alpha=0.5, epsilon=0.1):
+        """
+        Initialize AI with an empty Q-learning dictionary,
+        an alpha (learning) rate, and an epsilon rate.
+
+        The Q-learning dictionary maps `(state, action)` pairs to a Q-value (a number).
+         - `state` is a tuple of remaining piles, e.g. (1, 1, 4, 4)
+         - `action` is a tuple `(i, j)` for an action
+        """
+        self.q_value = {}
+        self.alpha = alpha
+        self.epsilon = epsilon
+
+    def update(self, old_state, action, new_state, reward):
+        """
+        Update Q-learning model, given an old state, an action taken
+        in that state, a new resulting state, and the reward received
+        from taking that action.
+        """
+        old = self.get_q_value(old_state, action)
+        best_future = self.best_future_reward(new_state)
+        self.update_q_value(old_state, action, old, reward, best_future)
+
+    def get_q_value(self, state, action):
+        """
+        Return the Q-value for the state `state` and the action `action`.
+        If no Q-value exists yet in `self.q`, return 0.
+        """
+        # If there is a Q-value for current (state, action)
+        # already in `self.q`, return it
+        if (tuple(state), action) in self.q_value:
+            return self.q_value[(tuple(state), action)]
+
+        # If current (state action) is not explored yet, Q-value is 0
+        return 0
+
+    def update_q_value(self, state, action, old_q, reward, future_rewards):
+        """
+        Update the Q-value for the state `state` and the action `action`
+        given the previous Q-value `old_q`, a current reward `reward`,
+        and an estiamte of future rewards `future_rewards`.
+
+        Use the formula:
+
+        Q(s, a) <- old value estimate + alpha * (new value estimate - old value estimate)
+
+        where `old value estimate` is the previous Q-value,
+        `alpha` is the learning rate, and `new value estimate`
+        is the sum of the current reward and estimated future rewards.
+        """
+        # Calculate and get constants
+        new_value_estimate = reward + future_rewards
+        alpha = self.alpha
+
+        # Update Q-value according to the formula
+        self.q_value[(tuple(state), action)] = old_q + alpha * (new_value_estimate - old_q)
+
+    def best_future_reward(self, state):
+        """
+        Given a state `state`, consider all possible `(state, action)`
+        pairs available in that state and return the maximum of all
+        of their Q-values.
+
+        Use 0 as the Q-value if a `(state, action)` pair has no
+        Q-value in `self.q`. If there are no available actions in
+        `state`, return 0.
+        """
+        possible_actions = Nim.available_actions(state)
+
+        # Corner case where there is no possible actions
+        if len(possible_actions) == 0:
+            return 0
+
+        # Initialize cur_reward to as low as possible to make sure
+        # There are better actions than None
+        reward = -math.inf
+
+        for action in possible_actions:
+            # If action is in self.q and the reward of the action 
+            # is better than current reward, update reward
+            cur_reward = self.get_q_value(state, action)
+            if cur_reward > reward:
+                reward = cur_reward
+
+        return reward
+
+    def choose_action(self, state, epsilon=True):
+        """
+        Given a state `state`, return an action `(i, j)` to take.
+
+        If `epsilon` is `False`, then return the best action
+        available in the state (the one with the highest Q-value,
+        using 0 for pairs that have no Q-values).
+
+        If `epsilon` is `True`, then with probability
+        `self.epsilon` choose a random available action,
+        otherwise choose the best action available.
+
+        If multiple actions have the same Q-value, any of those
+        options is an acceptable return value.
+        """
+        # Initialize all possible actions
+        # Set highest Q-value to as low as possible to make sure
+        # some action has better  Q-value than the initial best action of None
+        possible_actions = Nim.available_actions(state)
+        highest_q = -math.inf 
+        best_action = None    
+
+        # Iterate all possible actions and compare the Q-value of each
+        for action in possible_actions:
+            current_q = self.get_q_value(state, action)
+            # If current action is better, update current Q-value and best_action
+            if current_q > highest_q:
+                highest_q = current_q
+                best_action = action
+
+        # If epsilon is true, take random action according to probabilities
+        # Exploration vs Exploitation
+        if epsilon:
+            # For self.epsilon chance, take random action
+            # For 1 - self.epsilon chance, take best action
+            action_weights = [self.epsilon / len(possible_actions) if action != best_action else
+                                (1 - self.epsilon) for action in possible_actions]
+
+            best_action = random.choices(list(possible_actions), weights=action_weights, k=1)[0]
+
+        return best_action
+```
+
+## Defining the training 
+
+The `train` function trains the AI by making it play against itself 'n' times.
+It sets up the game using `Nim` class, trains the AI using `NimAI` class, and finally returns the trained AI.
+
+
+```{python}
+#| eval: false
+def train(n):
+    """
+    Train an AI by playing `n` games against itself.
+    """
+
+    player = NimAI()
+
+    # Play 'n' games
+    for i in range(n):
+        
+        # print the phrase only for the first and last 10 games when training is > 50 games
+        if i+1 <= 10 or n <=50:
+            print(f"Playing training game {i + 1}")
+            
+        elif len(range(n)) - i <= 10 :
+            if len(range(n)) - i == 10:
+                print("*\n"*5 , end='')
+            print(f"Playing training game {i + 1}")
+
+
+        #initialize the game
+        game = Nim()
+
+        # Keep track of last move made by either player
+        last = {
+            0: {"state": None, "action": None},
+            1: {"state": None, "action": None}
+        }
+
+        # Game loop
+        while True:
+
+            # Keep track of current state and action
+            state = game.piles.copy()
+            action = player.choose_action(game.piles)
+
+            # Keep track of last state and action
+            last[game.player]["state"] = state
+            last[game.player]["action"] = action
+
+            # Make move
+            game.move(action)
+            new_state = game.piles.copy()
+
+            # When game is over, update Q-value with rewards
+            if game.winner is not None:
+
+                # update the state and action that resulted in loss with reward value -1
+                player.update(state, action, new_state, -1)
+
+                # update the state and action that resulted in win with reward value 1
+                player.update(last[game.player]["state"], last[game.player]["action"], new_state, 1)
+                
+                break
+
+            # If game is continuing, update Q-value with no rewards i.e. 0
+            elif last[game.player]["state"] is not None:
+
+                player.update(last[game.player]["state"],last[game.player]["action"], new_state, 0)
+
+    print("\nDone training")
+
+    # Return the trained AI
+    return player
+
+```
+
+## Defining the play between a human and the NimAI
+
+The `play` function sets up a Nim game between a human and the AI using the `NimAI` object.
+
+
+```{python}
+#| eval: false
+def play(nim_ai, human_player=None):
+    """
+    Play human game against the AI.
+    `human_player` can be set to 0 or 1 to specify whether
+    human player moves first or second.
+    """
+
+    # If no player order set, choose human's order randomly
+    if human_player is None:
+        human_player = random.randint(0, 1)
+
+    # Create new game
+    game = Nim()
+
+    # Game loop
+    while True:
+
+        # Print contents of piles
+        print()
+        print("Piles:")
+        for i, pile in enumerate(game.piles):
+            print(f"Pile {i}: {pile}")
+        print()
+
+        # Compute current available actions
+        available_actions = Nim.available_actions(game.piles)
+        time.sleep(1)
+
+        # Let human make a move
+        if game.player == human_player:
+            print("Your Turn")
+            while True:
+                pile = int(input("Choose Pile: "))
+                count = int(input("Choose Count: "))
+                if (pile, count) in available_actions:
+                    break
+                print("Invalid move, try again.")
+
+        # Have AI make a move 
+        else:
+            print("AI's Turn")
+            pile, count = nim_ai.choose_action(game.piles, epsilon=False)
+            print(f"AI chose to take {count} object(s) from pile {pile}.")
+
+        # updates the objects in each pile after taking action; Switches player; Checks for winner
+        game.move((pile, count))
+
+        # Checks for winner and ends the game
+        if game.winner is not None:
+            print()
+            print("GAME OVER")
+            winner = "Human" if game.winner == human_player else "AI"
+            print(f"Winner is {winner}")
+            return
+
+```
+
+# Testing the NimAI
+
+Now that we have our model ready, let's first play with the AI without training it.
+
+## Human Vs Untrained AI
+
+
+```{python}
+#| eval: false
+untrained_ai = train(0)
+```
+
+    
+    Done training
+    
+
+
+```{python}
+#| eval: false
+play(untrained_ai)
+```
+
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 3
+    Pile 2: 5
+    Pile 3: 7
+    
+    Your Turn
+    Choose Pile: 2
+    Choose Count: 5
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 3
+    Pile 2: 0
+    Pile 3: 7
+    
+    AI's Turn
+    AI chose to take 1 object(s) from pile 0.
+    
+    Piles:
+    Pile 0: 0
+    Pile 1: 3
+    Pile 2: 0
+    Pile 3: 7
+    
+    Your Turn
+    Choose Pile: 3
+    Choose Count: 6
+    
+    Piles:
+    Pile 0: 0
+    Pile 1: 3
+    Pile 2: 0
+    Pile 3: 1
+    
+    AI's Turn
+    AI chose to take 1 object(s) from pile 3.
+    
+    Piles:
+    Pile 0: 0
+    Pile 1: 3
+    Pile 2: 0
+    Pile 3: 0
+    
+    Your Turn
+    Choose Pile: 1
+    Choose Count: 2
+    
+    Piles:
+    Pile 0: 0
+    Pile 1: 1
+    Pile 2: 0
+    Pile 3: 0
+    
+    AI's Turn
+    AI chose to take 1 object(s) from pile 1.
+    
+    GAME OVER
+    Winner is Human
+    
+
+We can see that it is very easy to win against the AI since it is playing randomly without using any optimized Q-values.
+
+## Human Vs Trained AI
+
+Now, let's train our AI on 10,000 games and play against it.
+
+
+```{python}
+#| eval: false
+trained_ai = train(10000)
+```
+
+    Playing training game 1
+    Playing training game 2
+    Playing training game 3
+    Playing training game 4
+    Playing training game 5
+    Playing training game 6
+    Playing training game 7
+    Playing training game 8
+    Playing training game 9
+    Playing training game 10
+    *
+    *
+    *
+    *
+    *
+    Playing training game 9991
+    Playing training game 9992
+    Playing training game 9993
+    Playing training game 9994
+    Playing training game 9995
+    Playing training game 9996
+    Playing training game 9997
+    Playing training game 9998
+    Playing training game 9999
+    Playing training game 10000
+    
+    Done training
+    
+
+
+```{python}
+#| eval: false
+play(trained_ai)
+```
+
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 3
+    Pile 2: 5
+    Pile 3: 7
+    
+    AI's Turn
+    AI chose to take 5 object(s) from pile 2.
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 3
+    Pile 2: 0
+    Pile 3: 7
+    
+    Your Turn
+    Choose Pile: 1
+    Choose Count: 2
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 1
+    Pile 2: 0
+    Pile 3: 7
+    
+    AI's Turn
+    AI chose to take 6 object(s) from pile 3.
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 1
+    Pile 2: 0
+    Pile 3: 1
+    
+    Your Turn
+    Choose Pile: 3
+    Choose Count: 1
+    
+    Piles:
+    Pile 0: 1
+    Pile 1: 1
+    Pile 2: 0
+    Pile 3: 0
+    
+    AI's Turn
+    AI chose to take 1 object(s) from pile 0.
+    
+    Piles:
+    Pile 0: 0
+    Pile 1: 1
+    Pile 2: 0
+    Pile 3: 0
+    
+    Your Turn
+    Choose Pile: 1
+    Choose Count: 1
+    
+    GAME OVER
+    Winner is AI
+    
+
+Now that we have trained the AI, we can see that it is quite challenging to beat the AI as it has gained the experience needed to make optimal moves and win the game.

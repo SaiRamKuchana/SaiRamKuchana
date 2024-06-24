@@ -1,0 +1,4 @@
+- title: Soft deletions, views, and triggers in the context of a museum’s database
+  path: projects/SQLMuseum/mfa.qmd
+  image: projects/SQLMuseum/ERmfa.png
+  categories: [SQL]
