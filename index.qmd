@@ -16,18 +16,6 @@ about:
 
   image-width: 15em
   
-  links:
-    - icon: linkedin
-      text: Linkedin
-      href: https://www.linkedin.com/in/ram-kuchana/
-#    - icon: github
-#      text: GitHub
-#      href: https://github.com      
-    - icon: envelope
-      text: Email
-      href: mailto:rams9795@gmail.com
-    # (additional links excluded for brevity)
-  
   id: ppc
     
 sidebar: false
@@ -38,7 +26,7 @@ listing:
     type: grid
 #    categories: unnumbered
     contents: 
-#      - projects/MNIST/MNIST.qmd
+
       - projects/NimGame/nimgame.yaml
       - projects/ParseTrees/parsetrees.yaml
       - projects/SQLPackages/sqlpackages.yaml
