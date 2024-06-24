@@ -125,8 +125,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>  
 </ul>
             <div class="quarto-navbar-tools ms-auto">
-    <a href="https://www.linkedin.com/in/ram-kuchana/" rel="" title="Linkedin" class="quarto-navigation-tool px-1" aria-label="Linkedin"><i class="bi bi-linkedin"></i></a>
-    <a href="mailto:rams9795@gmail.com" rel="" title="Email" class="quarto-navigation-tool px-1" aria-label="Email"><i class="bi bi-envelope"></i></a>
 </div>
           </div> <!-- /navcollapse -->
       </div> <!-- /container-fluid -->
@@ -601,7 +599,7 @@ Distance from digit 7 to digit 7 in our training set: 5223403.0</code></pre>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Classification time of NN classifier: </span><span class="sc">{</span><span class="bu">round</span>(t_after <span class="op">-</span> t_before, <span class="dv">2</span>)<span class="sc">}</span><span class="ss"> sec"</span>)</span></code></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Classification time of NN classifier: 23.23 sec</code></pre>
+<pre><code>Classification time of NN classifier: 24.33 sec</code></pre>
 </div>
 </div>
 </section>
@@ -681,10 +679,10 @@ Distance from digit 7 to digit 7 in our training set: 5223403.0</code></pre>
 <span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Does k-d tree produce same predictions as NN classifier? "</span>, np.array_equal(test_predictions, kd_tree_predictions))</span></code></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time to build data structure: 0.52 sec
-Time to classify test set: 4.79 sec
+<pre><code>Time to build data structure: 0.56 sec
+Time to classify test set: 4.84 sec
 
-Overall classification time of k-d tree algorithm: 5.31 sec
+Overall classification time of k-d tree algorithm: 5.4 sec
 Does k-d tree produce same predictions as NN classifier?  True</code></pre>
 </div>
 </div>
