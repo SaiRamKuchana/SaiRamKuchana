@@ -22,16 +22,16 @@ website:
 #    foreground: secondary
     search: false
 
-    tools:
-      - icon: linkedin
-        text: Linkedin
-        href: https://www.linkedin.com/in/ram-kuchana/
+#    tools:
+#      - icon: linkedin
+#        text: Linkedin
+#        href: https://www.linkedin.com/in/ram-kuchana/
 #      - icon: github
 #        text: GitHub
 #        href: https://github.com
-      - icon: envelope
-        text: Email
-        href: mailto:rams9795@gmail.com
+#      - icon: envelope
+#        text: Email
+#        href: mailto:rams9795@gmail.com
         
 
     left:
