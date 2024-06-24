@@ -10,7 +10,6 @@ jupyter: python3
 website:
 
   page-navigation: true
-  repo-url: https://github.com
   
   reader-mode: false
   back-to-top-navigation: true
@@ -21,17 +20,6 @@ website:
     background: dark
 #    foreground: secondary
     search: false
-
-#    tools:
-#      - icon: linkedin
-#        text: Linkedin
-#        href: https://www.linkedin.com/in/ram-kuchana/
-#      - icon: github
-#        text: GitHub
-#        href: https://github.com
-#      - icon: envelope
-#        text: Email
-#        href: mailto:rams9795@gmail.com
         
 
     left:
